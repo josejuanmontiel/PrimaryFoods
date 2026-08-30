@@ -1,0 +1,621 @@
+[
+  {
+    "id": "brocoli",
+    "name": "Brócoli",
+    "scientificName": "Brassica oleracea var. italica",
+    "category": "vegetable",
+    "aliases": ["brocoli", "brocolis", "brócolis", "broccoli"],
+    "nutritionPer100g": {
+      "calories": 34.0,
+      "protein": 2.8,
+      "fat": 0.4,
+      "carbs": 6.6,
+      "fiber": 2.6,
+      "sugars": 1.7,
+      "sodium": 33.0
+    },
+    "micronutrients": {
+      "vitamina_c_mg": 89.2,
+      "vitamina_k_ug": 101.6,
+      "acido_folico_ug": 63.0,
+      "potasio_mg": 316.0
+    },
+    "bioactiveCompounds": ["Sulforafano", "Glucosinolatos", "Indol-3-carbinol", "Luteína"],
+    "benefits": [
+      "Potente efecto antioxidante y protector celular gracias al sulforafano",
+      "Estimula las enzimas de detoxificación hepática",
+      "Alto contenido en vitamina C que apoya el sistema inmune",
+      "Rico en fibra prebiótica que favorece la microbiota intestinal"
+    ],
+    "synergies": [
+      "Cocinar al vapor menos de 4 minutos o saltear ligeramente para no inactivar la enzima mirosinasa",
+      "Añadir mostaza en grano o rábano crudo para potenciar la formación de sulforafano"
+    ],
+    "tags": ["antioxidante", "detox", "salud-inmune", "prebiotico", "anticancerigeno"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "avena_hojuelas",
+    "name": "Avena en hojuelas",
+    "scientificName": "Avena sativa",
+    "category": "cereal",
+    "aliases": ["avena", "hojuelas de avena", "copos de avena", "harina de avena", "oatmeal"],
+    "nutritionPer100g": {
+      "calories": 389.0,
+      "protein": 16.9,
+      "fat": 6.9,
+      "carbs": 66.3,
+      "fiber": 10.6,
+      "sugars": 0.0,
+      "sodium": 2.0
+    },
+    "micronutrients": {
+      "hierro_mg": 4.7,
+      "magnesio_mg": 177.0,
+      "zinc_mg": 4.0,
+      "vitamina_b1_mg": 0.76
+    },
+    "bioactiveCompounds": ["Betaglucanos", "Avenantramidas", "Fitosteroles"],
+    "benefits": [
+      "Los betaglucanos ayudan a reducir el colesterol LDL en sangre",
+      "Las avenantramidas ejercen una acción antiinflamatoria y antipruriginosa única",
+      "Proporciona energía sostenida de bajo índice glucémico y alta saciedad",
+      "Excelente fibra soluble que nutre las bacterias beneficiosas del colon"
+    ],
+    "synergies": [
+      "Remojar previamente (overnight oats) para reducir los fitatos y mejorar la absorción de minerales",
+      "Combinar con frutas ricas en vitamina C (arándanos, fresas) para maximizar la absorción de hierro vegetal"
+    ],
+    "tags": ["salud-cardiovascular", "prebiotico", "antiinflamatorio", "saciante", "bajo-ig"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "aceite_oliva_virgen_extra",
+    "name": "Aceite de oliva virgen extra",
+    "scientificName": "Olea europaea",
+    "category": "oil",
+    "aliases": ["aceite de oliva", "aove", "aceite de oliva virgen", "aceite oliva"],
+    "nutritionPer100g": {
+      "calories": 884.0,
+      "protein": 0.0,
+      "fat": 100.0,
+      "carbs": 0.0,
+      "fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 0.0
+    },
+    "micronutrients": {
+      "vitamina_e_mg": 14.3,
+      "vitamina_k_ug": 60.2
+    },
+    "bioactiveCompounds": ["Oleocantal", "Hidroxitirosol", "Oleuropeína", "Ácido oleico (Omega-9)"],
+    "benefits": [
+      "El oleocantal actúa como un potente antiinflamatorio natural similar al ibuprofeno",
+      "El hidroxitirosol protege a los lípidos sanguíneos contra el daño oxidativo",
+      "Pilar fundamental de la dieta mediterránea para la longevidad y salud cardiovascular",
+      "Mejora la elasticidad arterial y el perfil lipídico"
+    ],
+    "synergies": [
+      "Consumir en crudo sobre verduras para aumentar drásticamente la absorción de carotenoides y vitaminas liposolubles (A, D, E, K)",
+      "Combinar con tomate cocinado para multiplicar por 4 la asimilación del licopeno"
+    ],
+    "tags": ["salud-cardiovascular", "antiinflamatorio", "longevidad", "antioxidante", "grasa-saludable"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "ajo",
+    "name": "Ajo",
+    "scientificName": "Allium sativum",
+    "category": "vegetable",
+    "aliases": ["ajo", "diente de ajo", "dientes de ajo", "ajos"],
+    "nutritionPer100g": {
+      "calories": 149.0,
+      "protein": 6.4,
+      "fat": 0.5,
+      "carbs": 33.1,
+      "fiber": 2.1,
+      "sugars": 1.0,
+      "sodium": 17.0
+    },
+    "micronutrients": {
+      "vitamina_c_mg": 31.2,
+      "vitamina_b6_mg": 1.2,
+      "manganeso_mg": 1.7,
+      "selenio_ug": 14.2
+    },
+    "bioactiveCompounds": ["Alicina", "Aliína", "Ajoeno", "S-alilcisteína"],
+    "benefits": [
+      "La alicina proporciona propiedades antimicrobianas, antifúngicas y antivirales naturales",
+      "Contribuye a regular la presión arterial y mejorar la circulación",
+      "Ayuda a reducir los niveles de triglicéridos y colesterol total",
+      "Estimula la producción de glutatión, el antioxidante maestro del organismo"
+    ],
+    "synergies": [
+      "Picar o machacar y dejar reposar 10 minutos antes de cocinar para que la enzima alinasa genere el máximo de alicina",
+      "Consumir con aceite de oliva para estabilizar sus compuestos sulfurados"
+    ],
+    "tags": ["inmunomodulador", "cardiovascular", "antibacteriano", "antioxidante", "depurativo"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "curcuma",
+    "name": "Cúrcuma",
+    "scientificName": "Curcuma longa",
+    "category": "spice",
+    "aliases": ["curcuma", "cúrcuma en polvo", "raíz de cúrcuma", "turmeric"],
+    "nutritionPer100g": {
+      "calories": 312.0,
+      "protein": 9.7,
+      "fat": 3.3,
+      "carbs": 67.1,
+      "fiber": 22.7,
+      "sugars": 3.2,
+      "sodium": 27.0
+    },
+    "micronutrients": {
+      "hierro_mg": 55.0,
+      "manganeso_mg": 19.8,
+      "potasio_mg": 2080.0
+    },
+    "bioactiveCompounds": ["Curcumina", "Demetoxicurcumina", "Turmerona"],
+    "benefits": [
+      "La curcumina es uno de los antiinflamatorios naturales más investigados científicamente",
+      "Apoya la salud articular y alivia molestias musculares",
+      "Poderoso neuroprotector y estimulante del factor neurotrófico cerebral (BDNF)",
+      "Protector de la mucosa gástrica y la función biliar"
+    ],
+    "synergies": [
+      "Combinar obligatoriamente con pimienta negra (la piperina multiplica su biodisponibilidad hasta un 2000%)",
+      "Acompañar siempre de una fuente grasa (aceite de oliva, leche de coco) al ser un compuesto liposoluble"
+    ],
+    "tags": ["antiinflamatorio", "salud-articular", "neuroprotector", "antioxidante", "digestivo"],
+    "dataSource": "USDA"
+  },
+  {
+    "id": "tomate",
+    "name": "Tomate",
+    "scientificName": "Solanum lycopersicum",
+    "category": "vegetable",
+    "aliases": ["tomate", "tomates", "tomate frito", "tomate triturado", "tomate cherry"],
+    "nutritionPer100g": {
+      "calories": 18.0,
+      "protein": 0.9,
+      "fat": 0.2,
+      "carbs": 3.9,
+      "fiber": 1.2,
+      "sugars": 2.6,
+      "sodium": 5.0
+    },
+    "micronutrients": {
+      "vitamina_c_mg": 13.7,
+      "vitamina_a_ug": 42.0,
+      "potasio_mg": 237.0
+    },
+    "bioactiveCompounds": ["Licopeno", "Betacaroteno", "Naringenina", "Ácido clorogénico"],
+    "benefits": [
+      "El licopeno es un carotenoide antioxidante con demostrada protección prostática y cardiovascular",
+      "Protege las células cutáneas frente al daño por radiación ultravioleta",
+      "Bajo aporte calórico y alto contenido hídrico hidratante",
+      "Favorece el control de la presión arterial por su equilibrio potasio/sodio"
+    ],
+    "synergies": [
+      "Cocinar el tomate con aceite de oliva virgen extra transforma el licopeno a su forma 'cis', aumentando su absorción hasta 4 veces"
+    ],
+    "tags": ["antioxidante", "salud-prostatica", "salud-cardiovascular", "hidratante", "piel-saludable"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "espinacas",
+    "name": "Espinacas",
+    "scientificName": "Spinacia oleracea",
+    "category": "vegetable",
+    "aliases": ["espinaca", "espinacas", "hojas de espinaca", "spinach"],
+    "nutritionPer100g": {
+      "calories": 23.0,
+      "protein": 2.9,
+      "fat": 0.4,
+      "carbs": 3.6,
+      "fiber": 2.2,
+      "sugars": 0.4,
+      "sodium": 79.0
+    },
+    "micronutrients": {
+      "vitamina_k_ug": 483.0,
+      "vitamina_a_ug": 469.0,
+      "acido_folico_ug": 194.0,
+      "hierro_mg": 2.7,
+      "magnesio_mg": 79.0
+    },
+    "bioactiveCompounds": ["Luteína", "Zeaxantina", "Nitrato inorgánico natural", "Clorofila"],
+    "benefits": [
+      "La luteína y zeaxantina se concentran en la mácula ocular protegiendo la visión",
+      "Los nitratos naturales mejoran la producción de óxido nítrico, optimizando el rendimiento físico y la vasodilatación",
+      "Extraordinaria fuente de ácido fólico esencial para la renovación celular",
+      "Aporta magnesio y potasio para el equilibrio electrolítico y muscular"
+    ],
+    "synergies": [
+      "Aderezar con zumo de limón para que la vitamina C convierta el hierro no hemo a forma ferrosa absorbible",
+      "Cocinar ligeramente para reducir la concentración de oxalatos solubles"
+    ],
+    "tags": ["salud-ocular", "rendimiento-fisico", "salud-cardiovascular", "hematopoyesis", "mineralizante"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "lentejas",
+    "name": "Lentejas",
+    "scientificName": "Lens culinaris",
+    "category": "legume",
+    "aliases": ["lenteja", "lentejas", "lentejas pardinas", "lenteja cocida", "lentejas cocidas"],
+    "nutritionPer100g": {
+      "calories": 116.0,
+      "protein": 9.0,
+      "fat": 0.4,
+      "carbs": 20.1,
+      "fiber": 7.9,
+      "sugars": 1.8,
+      "sodium": 2.0
+    },
+    "micronutrients": {
+      "hierro_mg": 3.3,
+      "acido_folico_ug": 181.0,
+      "zinc_mg": 1.3,
+      "fosforo_mg": 180.0
+    },
+    "bioactiveCompounds": ["Polifenoles", "Almidón resistente", "Fitatos", "Saponinas"],
+    "benefits": [
+      "El almidón resistente alimenta la microbiota colónica generando butirato protector",
+      "Excelente fuente de proteína vegetal de alta digestibilidad",
+      "Contribuye a regular la glucemia y previene picos de insulina",
+      "Aporte sobresaliente de folatos indispensables para la síntesis de ADN"
+    ],
+    "synergies": [
+      "Combinar con cereales integrales (arroz, avena) para obtener un perfil de aminoácidos esenciales 100% completo",
+      "Añadir laurel y comino en la cocción para mejorar la digestibilidad y reducir gases"
+    ],
+    "tags": ["proteina-vegetal", "prebiotico", "salud-metabolica", "saciante", "alto-en-hierro"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "garbanzos",
+    "name": "Garbanzos",
+    "scientificName": "Cicer arietinum",
+    "category": "legume",
+    "aliases": ["garbanzo", "garbanzos", "garbanzos cocidos", "chickpeas"],
+    "nutritionPer100g": {
+      "calories": 139.0,
+      "protein": 8.9,
+      "fat": 2.6,
+      "carbs": 27.4,
+      "fiber": 7.6,
+      "sugars": 4.8,
+      "sodium": 7.0
+    },
+    "micronutrients": {
+      "acido_folico_ug": 172.0,
+      "magnesio_mg": 48.0,
+      "hierro_mg": 2.9,
+      "zinc_mg": 1.5
+    },
+    "bioactiveCompounds": ["Isoflavonas", "Rafinosa", "Esteroles vegetales"],
+    "benefits": [
+      "Ayuda a regular los niveles de glucosa y colesterol sérico",
+      "Rico en triptófano, aminoácido precursor de la serotonina y melatonina",
+      "Gran capacidad saciante que favorece el control de peso corporal",
+      "Aporte equilibrado de hidratos de carbono complejos y proteína"
+    ],
+    "synergies": [
+      "Consumir en forma de hummus (con tahini y limón) para combinar proteína de legumbre + sésamo y potenciar el hierro con vitamina C"
+    ],
+    "tags": ["proteina-vegetal", "saciante", "estado-animo", "salud-cardiovascular", "fibra"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "nueces",
+    "name": "Nueces",
+    "scientificName": "Juglans regia",
+    "category": "nut",
+    "aliases": ["nuez", "nueces", "nueces peladas", "walnuts"],
+    "nutritionPer100g": {
+      "calories": 654.0,
+      "protein": 15.2,
+      "fat": 65.2,
+      "carbs": 13.7,
+      "fiber": 6.7,
+      "sugars": 2.6,
+      "sodium": 2.0
+    },
+    "micronutrients": {
+      "magnesio_mg": 158.0,
+      "cobre_mg": 1.6,
+      "manganeso_mg": 3.4,
+      "vitamina_b6_mg": 0.54
+    },
+    "bioactiveCompounds": ["Ácido alfa-linolénico (ALA / Omega-3)", "Polifenoles elagitaninos", "Melatonina natural"],
+    "benefits": [
+      "El fruto seco con mayor concentración de ácidos grasos Omega-3 vegetal (ALA)",
+      "Los elagitaninos son metabolizados por la microbiota en urolitinas con potente acción antiaging",
+      "Mejora la función endotelial y la neuroplasticidad cerebral",
+      "Contiene melatonina biodisponible que apoya los ritmos circadianos"
+    ],
+    "synergies": [
+      "Consumir crudas y con su fina piel marrón donde reside el 90% de sus antioxidantes fenólicos",
+      "Añadir a desayunos de avena o yogur para amortiguar la respuesta glucémica"
+    ],
+    "tags": ["omega-3", "salud-cerebral", "longevidad", "salud-cardiovascular", "antiinflamatorio"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "semillas_chia",
+    "name": "Semillas de chía",
+    "scientificName": "Salvia hispanica",
+    "category": "nut",
+    "aliases": ["chia", "chía", "semillas de chía", "semilla de chia"],
+    "nutritionPer100g": {
+      "calories": 486.0,
+      "protein": 16.5,
+      "fat": 30.7,
+      "carbs": 42.1,
+      "fiber": 34.4,
+      "sugars": 0.0,
+      "sodium": 16.0
+    },
+    "micronutrients": {
+      "calcio_mg": 631.0,
+      "magnesio_mg": 335.0,
+      "fosforo_mg": 860.0,
+      "hierro_mg": 7.7
+    },
+    "bioactiveCompounds": ["Mucílago hidrosoluble", "Ácido cafeico", "Quercetina", "Kaempferol"],
+    "benefits": [
+      "Forma un gel de mucílago que lubrica la mucosa intestinal y regula el tránsito",
+      "Concentración excepcional de calcio vegetal (más que la leche de vaca por 100g)",
+      "Proporciona una liberación ultralenta de energía y saciedad prolongada",
+      "Rica en ácidos grasos Omega-3 protectores frente a la inflamación sistémica"
+    ],
+    "synergies": [
+      "Hidratar previamente en agua, bebida vegetal o yogur durante 15 minutos para activar su gel de mucílago"
+    ],
+    "tags": ["omega-3", "salud-osea", "salud-digestiva", "saciante", "superalimento"],
+    "dataSource": "USDA"
+  },
+  {
+    "id": "aguacate",
+    "name": "Aguacate",
+    "scientificName": "Persea americana",
+    "category": "fruit",
+    "aliases": ["aguacate", "aguacates", "palta", "avocado"],
+    "nutritionPer100g": {
+      "calories": 160.0,
+      "protein": 2.0,
+      "fat": 14.7,
+      "carbs": 8.5,
+      "fiber": 6.7,
+      "sugars": 0.7,
+      "sodium": 7.0
+    },
+    "micronutrients": {
+      "potasio_mg": 485.0,
+      "vitamina_e_mg": 2.07,
+      "vitamina_b6_mg": 0.26,
+      "acido_folico_ug": 81.0
+    },
+    "bioactiveCompounds": ["Ácido oleico", "Glutatión", "Betasitosterol", "Luteína"],
+    "benefits": [
+      "El betasitosterol ayuda a mantener niveles saludables de colesterol",
+      "Rico en potasio (más que el plátano) favoreciendo el equilibrio de la presión arterial",
+      "Abundante en fibra soluble e insoluble que apoya la salud del microbioma",
+      "Aporta antioxidantes liposolubles que protegen las membranas celulares"
+    ],
+    "synergies": [
+      "Añadir a ensaladas con tomate o zanahoria para multiplicar por 5 la absorción de carotenoides de las verduras"
+    ],
+    "tags": ["grasa-saludable", "salud-cardiovascular", "saciante", "salud-ocular", "potasio"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "jengibre",
+    "name": "Jengibre",
+    "scientificName": "Zingiber officinale",
+    "category": "spice",
+    "aliases": ["jengibre", "raíz de jengibre", "jengibre fresco", "ginger"],
+    "nutritionPer100g": {
+      "calories": 80.0,
+      "protein": 1.8,
+      "fat": 0.8,
+      "carbs": 17.8,
+      "fiber": 2.0,
+      "sugars": 1.7,
+      "sodium": 13.0
+    },
+    "micronutrients": {
+      "vitamina_c_mg": 5.0,
+      "potasio_mg": 415.0,
+      "magnesio_mg": 43.0
+    },
+    "bioactiveCompounds": ["Gingeroles", "Shogaoles", "Zingerona"],
+    "benefits": [
+      "Los gingeroles alivian las náuseas, aceleran el vaciado gástrico y mejoran la digestión",
+      "Notable efecto antiinflamatorio útil en dolores musculares y articulares",
+      "Estimula la termogénesis y el metabolismo basal",
+      "Propiedades antimicrobianas que apoyan el sistema respiratorio e inmune"
+    ],
+    "synergies": [
+      "Combinar con limón y miel en infusión para potenciar el alivio de garganta y defensas",
+      "Cocinar suavemente para transformar gingeroles en shogaoles más potentes"
+    ],
+    "tags": ["digestivo", "antiinflamatorio", "inmunomodulador", "termogenico", "antiemetico"],
+    "dataSource": "USDA"
+  },
+  {
+    "id": "salmon",
+    "name": "Salmón",
+    "scientificName": "Salmo salar",
+    "category": "fish",
+    "aliases": ["salmon", "salmón", "lomo de salmón", "filete de salmón"],
+    "nutritionPer100g": {
+      "calories": 208.0,
+      "protein": 20.4,
+      "fat": 13.4,
+      "carbs": 0.0,
+      "fiber": 0.0,
+      "sugars": 0.0,
+      "sodium": 59.0
+    },
+    "micronutrients": {
+      "vitamina_d_ug": 11.0,
+      "vitamina_b12_ug": 3.2,
+      "selenio_ug": 36.5,
+      "potasio_mg": 363.0
+    },
+    "bioactiveCompounds": ["Ácidos grasos EPA y DHA (Omega-3 marino)", "Astaxantina", "Péptidos bioactivos"],
+    "benefits": [
+      "El EPA y DHA son fundamentales para la estructura neuronal y la reducción de triglicéridos",
+      "La astaxantina aporta el pigmento rosado con una capacidad antioxidante superior a la vitamina E",
+      "Excelente fuente de vitamina D natural, escasa en alimentos terrestres",
+      "Proteína de alto valor biológico para el mantenimiento de la masa muscular"
+    ],
+    "synergies": [
+      "Cocinar a temperatura moderada (al horno o plancha suave) para no oxidar los delicados ácidos grasos Omega-3",
+      "Acompañar con brócoli o verduras de hoja verde para una comida antiinflamatoria completa"
+    ],
+    "tags": ["omega-3", "salud-cerebral", "salud-cardiovascular", "vitamina-d", "proteina-alta-calidad"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "huevo",
+    "name": "Huevo de gallina",
+    "scientificName": "Gallus gallus domesticus",
+    "category": "dairy",
+    "aliases": ["huevo", "huevos", "huevo entero", "claras de huevo", "yema de huevo"],
+    "nutritionPer100g": {
+      "calories": 143.0,
+      "protein": 12.6,
+      "fat": 9.5,
+      "carbs": 0.7,
+      "fiber": 0.0,
+      "sugars": 0.4,
+      "sodium": 142.0
+    },
+    "micronutrients": {
+      "colina_mg": 294.0,
+      "vitamina_b12_ug": 1.1,
+      "vitamina_a_ug": 160.0,
+      "selenio_ug": 30.7,
+      "hierro_mg": 1.8
+    },
+    "bioactiveCompounds": ["Colina", "Luteína biodisponible", "Zeaxantina", "Fosfolípidos"],
+    "benefits": [
+      "Una de las mejores fuentes dietéticas de colina, esencial para la memoria y la función hepática",
+      "Patrón de referencia de aminoácidos esenciales con un valor biológico de 100",
+      "La luteína de la yema tiene una biodisponibilidad superior al estar emulsionada en grasa",
+      "Alta capacidad saciante ideal para desayunos y control glucémico"
+    ],
+    "synergies": [
+      "Consumir con la yema líquida o poco cocinada (huevo poché/pasado por agua) y la clara bien cuajada para desactivar la avidina"
+    ],
+    "tags": ["proteina-patron", "salud-cerebral", "colina", "salud-ocular", "saciante"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "yogur_natural",
+    "name": "Yogur natural",
+    "scientificName": "Lactobacillus bulgaricus & Streptococcus thermophilus",
+    "category": "dairy",
+    "aliases": ["yogur", "yogur natural", "yogur griego", "yogurt", "yogurt natural"],
+    "nutritionPer100g": {
+      "calories": 61.0,
+      "protein": 3.5,
+      "fat": 3.3,
+      "carbs": 4.7,
+      "fiber": 0.0,
+      "sugars": 4.7,
+      "sodium": 46.0
+    },
+    "micronutrients": {
+      "calcio_mg": 121.0,
+      "fosforo_mg": 95.0,
+      "vitamina_b2_mg": 0.14,
+      "vitamina_b12_ug": 0.4
+    },
+    "bioactiveCompounds": ["Bacterias probióticas vivas", "Ácido láctico", "Péptidos bioactivos lácteos"],
+    "benefits": [
+      "Los cultivos lácticos vivos refuerzan la barrera intestinal y modulan la inmunidad",
+      "El ácido láctico mejora la absorción intestinal de calcio y magnesio",
+      "Menor contenido de lactosa que la leche gracias a la fermentación bacteriana",
+      "Proteínas lácteas de fácil asimilación que favorecen la salud ósea"
+    ],
+    "synergies": [
+      "Combinar con alimentos prebióticos (avena, semillas de chía, fruta) para crear un efecto 'simbiótico' completo"
+    ],
+    "tags": ["probiotico", "salud-digestiva", "salud-osea", "calcio", "microbiota"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "cebolla",
+    "name": "Cebolla",
+    "scientificName": "Allium cepa",
+    "category": "vegetable",
+    "aliases": ["cebolla", "cebollas", "cebolla morada", "cebolla roja", "cebolleta"],
+    "nutritionPer100g": {
+      "calories": 40.0,
+      "protein": 1.1,
+      "fat": 0.1,
+      "carbs": 9.3,
+      "fiber": 1.7,
+      "sugars": 4.2,
+      "sodium": 4.0
+    },
+    "micronutrients": {
+      "vitamina_c_mg": 7.4,
+      "vitamina_b6_mg": 0.12,
+      "acido_folico_ug": 19.0,
+      "potasio_mg": 146.0
+    },
+    "bioactiveCompounds": ["Quercetina", "Fructooligosacáridos (FOS)", "Disulfuros de alilo"],
+    "benefits": [
+      "Excepcional fuente de quercetina, potente flavonoide antihistamínico y antiviral",
+      "Los FOS actúan como alimento prebiótico de primer orden para las bifidobacterias del colon",
+      "Propiedades antitrombóticas que favorecen la fluidez sanguínea",
+      "Efecto mucolítico y protector de las vías respiratorias"
+    ],
+    "synergies": [
+      "La quercetina se concentra en las capas exteriores: retirar solo la piel seca exterior para no perder hasta un 50% del antioxidante",
+      "Cocinar en sofrito suave con aceite de oliva para aumentar la biodisponibilidad de sus flavonoides"
+    ],
+    "tags": ["prebiotico", "antihistaminico", "cardiovascular", "antioxidante", "respiratorio"],
+    "dataSource": "BEDCA"
+  },
+  {
+    "id": "arandanos",
+    "name": "Arándanos",
+    "scientificName": "Vaccinium myrtillus",
+    "category": "fruit",
+    "aliases": ["arandano", "arándano", "arandanos", "arándanos", "blueberries"],
+    "nutritionPer100g": {
+      "calories": 57.0,
+      "protein": 0.7,
+      "fat": 0.3,
+      "carbs": 14.5,
+      "fiber": 2.4,
+      "sugars": 9.9,
+      "sodium": 1.0
+    },
+    "micronutrients": {
+      "vitamina_c_mg": 9.7,
+      "vitamina_k_ug": 19.3,
+      "manganeso_mg": 0.34
+    },
+    "bioactiveCompounds": ["Antocianinas", "Proantocianidinas", "Resveratrol", "Ácido elágico"],
+    "benefits": [
+      "Las antocianinas cruzan la barrera hematoencefálica protegiendo las neuronas del envejecimiento",
+      "Las proantocianidinas evitan la adhesión bacteriana en el tracto urinario",
+      "Mejora la sensibilidad a la insulina y la función vascular",
+      "Uno de los frutos con mayor capacidad antioxidante total (valor ORAC)"
+    ],
+    "synergies": [
+      "Consumir frescos o congelados en batidos, avena o yogur para combinar antioxidantes con probióticos"
+    ],
+    "tags": ["antioxidante", "salud-cerebral", "salud-urinaria", "antiaging", "bajo-ig"],
+    "dataSource": "USDA"
+  }
+]
