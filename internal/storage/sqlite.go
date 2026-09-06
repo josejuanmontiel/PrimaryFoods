@@ -72,9 +72,48 @@ func (s *Storage) initSchema() error {
 			PRIMARY KEY (alias, food_id),
 			FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
 		);`,
+		`CREATE TABLE IF NOT EXISTS user_pantry (
+			id INTEGER PRIMARY KEY,
+			product_code TEXT NOT NULL,
+			product_name TEXT NOT NULL,
+			amount REAL DEFAULT 0,
+			unit TEXT DEFAULT '',
+			pantry_zone TEXT DEFAULT 'food',
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS user_diary (
+			id INTEGER PRIMARY KEY,
+			date TEXT NOT NULL,
+			meal_type TEXT NOT NULL,
+			status TEXT DEFAULT 'consumed',
+			data_json TEXT NOT NULL,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS user_diary_history (
+			id INTEGER PRIMARY KEY,
+			diary_entry_id INTEGER NOT NULL,
+			date TEXT NOT NULL,
+			meal_type TEXT NOT NULL,
+			action TEXT NOT NULL,
+			version_number INTEGER DEFAULT 1,
+			data_json TEXT NOT NULL,
+			timestamp TEXT NOT NULL
+		);`,
+		`CREATE TABLE IF NOT EXISTS mealie_recipes (
+			id TEXT PRIMARY KEY,
+			slug TEXT NOT NULL,
+			name TEXT NOT NULL,
+			data_json TEXT NOT NULL,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
 		`CREATE INDEX IF NOT EXISTS idx_foods_category ON foods(category);`,
 		`CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name);`,
 		`CREATE INDEX IF NOT EXISTS idx_aliases_alias ON food_aliases(alias);`,
+		`CREATE INDEX IF NOT EXISTS idx_user_pantry_code ON user_pantry(product_code);`,
+		`CREATE INDEX IF NOT EXISTS idx_user_pantry_name ON user_pantry(product_name);`,
+		`CREATE INDEX IF NOT EXISTS idx_user_diary_date ON user_diary(date);`,
+		`CREATE INDEX IF NOT EXISTS idx_user_diary_history_entry ON user_diary_history(diary_entry_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_mealie_recipes_slug ON mealie_recipes(slug);`,
 	}
 
 	for _, q := range queries {
@@ -341,6 +380,154 @@ func (s *Storage) ExportAll() ([]model.PrimaryFood, error) {
 		}
 	}
 	return all, nil
+}
+
+// SavePantryItems guarda o reemplaza el inventario de despensa del usuario
+func (s *Storage) SavePantryItems(items []model.PantryItem) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec("DELETE FROM user_pantry"); err != nil {
+		return err
+	}
+
+	stmt, err := tx.Prepare(`INSERT INTO user_pantry (id, product_code, product_name, amount, unit, pantry_zone, updated_at) 
+		VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, item := range items {
+		if _, err := stmt.Exec(item.ID, item.ProductCode, item.ProductName, item.Amount, item.Unit, item.PantryZone); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// GetPantryItems devuelve todos los productos actuales de la despensa
+func (s *Storage) GetPantryItems() ([]model.PantryItem, error) {
+	rows, err := s.db.Query("SELECT id, product_code, product_name, amount, unit, pantry_zone FROM user_pantry ORDER BY product_name ASC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []model.PantryItem
+	for rows.Next() {
+		var item model.PantryItem
+		if err := rows.Scan(&item.ID, &item.ProductCode, &item.ProductName, &item.Amount, &item.Unit, &item.PantryZone); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+// SaveDiaryHistory almacena las entradas de diario y las versiones históricas de decisiones
+func (s *Storage) SaveDiaryHistory(diary []model.DiaryEntry, versions []model.DiaryVersion) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec("DELETE FROM user_diary"); err != nil {
+		return err
+	}
+	if _, err := tx.Exec("DELETE FROM user_diary_history"); err != nil {
+		return err
+	}
+
+	stmtDiary, err := tx.Prepare(`INSERT INTO user_diary (id, date, meal_type, status, data_json, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
+	if err != nil {
+		return err
+	}
+	defer stmtDiary.Close()
+
+	for _, d := range diary {
+		dataJSON, err := json.Marshal(d)
+		if err != nil {
+			continue
+		}
+		if _, err := stmtDiary.Exec(d.ID, d.Date, d.MealType, d.Status, string(dataJSON)); err != nil {
+			return err
+		}
+	}
+
+	stmtVer, err := tx.Prepare(`INSERT INTO user_diary_history (id, diary_entry_id, date, meal_type, action, version_number, data_json, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+	defer stmtVer.Close()
+
+	for _, v := range versions {
+		dataJSON, err := json.Marshal(v)
+		if err != nil {
+			continue
+		}
+		if _, err := stmtVer.Exec(v.ID, v.DiaryEntryID, v.Date, v.MealType, v.Action, v.VersionNumber, string(dataJSON), v.Timestamp); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// SaveRecipes guarda o actualiza recetas (de Mealie o internas) en la base de datos
+func (s *Storage) SaveRecipes(recipes []model.Recipe) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`INSERT INTO mealie_recipes (id, slug, name, data_json, updated_at) 
+		VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+		ON CONFLICT(id) DO UPDATE SET slug = excluded.slug, name = excluded.name, data_json = excluded.data_json, updated_at = CURRENT_TIMESTAMP`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, r := range recipes {
+		dataJSON, err := json.Marshal(r)
+		if err != nil {
+			continue
+		}
+		if _, err := stmt.Exec(r.ID, r.Slug, r.Name, string(dataJSON)); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// GetAllRecipes devuelve todas las recetas indexadas en SQLite
+func (s *Storage) GetAllRecipes() ([]model.Recipe, error) {
+	rows, err := s.db.Query("SELECT data_json FROM mealie_recipes ORDER BY name ASC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var recipes []model.Recipe
+	for rows.Next() {
+		var rawJSON string
+		if err := rows.Scan(&rawJSON); err != nil {
+			return nil, err
+		}
+		var r model.Recipe
+		if err := json.Unmarshal([]byte(rawJSON), &r); err == nil {
+			recipes = append(recipes, r)
+		}
+	}
+	return recipes, nil
 }
 
 // Close cierra la conexión a la base de datos

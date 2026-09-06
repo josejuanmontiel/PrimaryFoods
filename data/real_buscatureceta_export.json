@@ -1,0 +1,205 @@
+{
+  "schemaVersion": "1.0",
+  "app": "buscatureceta",
+  "exportedAt": "2026-09-03T20:45:00.000Z",
+  "pantry": [
+    {
+      "id": 1,
+      "productCode": "8480000101",
+      "productName": "Garbanzos Cocidos Luengo Extra",
+      "amount": 400,
+      "unit": "g",
+      "pantryZone": "food"
+    },
+    {
+      "id": 2,
+      "productCode": "8480000102",
+      "productName": "Espinacas frescas lavadas Florette",
+      "amount": 300,
+      "unit": "g",
+      "pantryZone": "food"
+    },
+    {
+      "id": 3,
+      "productCode": "8480000103",
+      "productName": "Dientes de ajo morado de Las Pedroñeras",
+      "amount": 5,
+      "unit": "unidad",
+      "pantryZone": "food"
+    },
+    {
+      "id": 4,
+      "productCode": "8480000104",
+      "productName": "Aceite de Oliva Virgen Extra Hojiblanca",
+      "amount": 750,
+      "unit": "ml",
+      "pantryZone": "food"
+    },
+    {
+      "id": 5,
+      "productCode": "8480000105",
+      "productName": "Pimentón dulce de la Vera con D.O.",
+      "amount": 75,
+      "unit": "g",
+      "pantryZone": "food"
+    },
+    {
+      "id": 6,
+      "productCode": "8480000106",
+      "productName": "Copos de Avena Integral Suaves",
+      "amount": 500,
+      "unit": "g",
+      "pantryZone": "food"
+    },
+    {
+      "id": 7,
+      "productCode": "8480000107",
+      "productName": "Manzanas Golden Delicious",
+      "amount": 4,
+      "unit": "unidad",
+      "pantryZone": "food"
+    },
+    {
+      "id": 8,
+      "productCode": "8480000108",
+      "productName": "Calabacines verdes frescos",
+      "amount": 2,
+      "unit": "unidad",
+      "pantryZone": "food"
+    },
+    {
+      "id": 9,
+      "productCode": "8480000109",
+      "productName": "Puerros frescos en manojo",
+      "amount": 3,
+      "unit": "unidad",
+      "pantryZone": "food"
+    },
+    {
+      "id": 10,
+      "productCode": "8480000110",
+      "productName": "Patatas especiales para cocer",
+      "amount": 1000,
+      "unit": "g",
+      "pantryZone": "food"
+    },
+    {
+      "id": 11,
+      "productCode": "8480000111",
+      "productName": "Huevos Camperos Clase M/L",
+      "amount": 6,
+      "unit": "unidad",
+      "pantryZone": "food"
+    }
+  ],
+  "diary": [
+    {
+      "id": 1,
+      "date": "2026-09-03",
+      "mealType": "lunch",
+      "status": "consumed",
+      "ate_at_home": true,
+      "version": 3,
+      "items": [
+        {
+          "course": "starter",
+          "name": "Gazpacho Andaluz",
+          "status": "consumed",
+          "servings": 1
+        },
+        {
+          "course": "main",
+          "name": "Garbanzos Salteados con Espinacas",
+          "status": "consumed",
+          "servings": 1
+        },
+        {
+          "course": "dessert",
+          "name": "Manzana",
+          "status": "consumed",
+          "servings": 1
+        }
+      ]
+    }
+  ],
+  "diaryVersions": [
+    {
+      "id": 1,
+      "diaryEntryId": 1,
+      "date": "2026-09-03",
+      "mealType": "lunch",
+      "action": "plan_created",
+      "versionNumber": 1,
+      "status": "planned",
+      "timestamp": "2026-09-03T09:00:00.000Z",
+      "items": [
+        {
+          "course": "main",
+          "name": "Garbanzos Salteados con Espinacas",
+          "status": "planned",
+          "servings": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "diaryEntryId": 1,
+      "date": "2026-09-03",
+      "mealType": "lunch",
+      "action": "plan_adjusted",
+      "versionNumber": 2,
+      "status": "planned",
+      "timestamp": "2026-09-03T11:30:00.000Z",
+      "items": [
+        {
+          "course": "starter",
+          "name": "Gazpacho Andaluz",
+          "status": "planned",
+          "servings": 1
+        },
+        {
+          "course": "main",
+          "name": "Garbanzos Salteados con Espinacas",
+          "status": "planned",
+          "servings": 1
+        },
+        {
+          "course": "dessert",
+          "name": "Tarta de chocolate",
+          "status": "planned",
+          "servings": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "diaryEntryId": 1,
+      "date": "2026-09-03",
+      "mealType": "lunch",
+      "action": "consumed",
+      "versionNumber": 3,
+      "status": "consumed",
+      "timestamp": "2026-09-03T14:45:00.000Z",
+      "items": [
+        {
+          "course": "starter",
+          "name": "Gazpacho Andaluz",
+          "status": "consumed",
+          "servings": 1
+        },
+        {
+          "course": "main",
+          "name": "Garbanzos Salteados con Espinacas",
+          "status": "consumed",
+          "servings": 1
+        },
+        {
+          "course": "dessert",
+          "name": "Manzana",
+          "status": "consumed",
+          "servings": 1
+        }
+      ]
+    }
+  ]
+}
