@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PrimaryFoods — Hub Nutricional & Motor Despensa ➔ Receta</title>
+  <title>PrimaryFoods — Hub Nutricional & Motor Analítico de Recetas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0b0f19;
@@ -26,7 +26,9 @@
       --amber-dim: rgba(245, 158, 11, 0.15);
       --rose: #f43f5e;
       --rose-dim: rgba(244, 63, 94, 0.15);
-      --radius: 14px;
+      --purple: #a855f7;
+      --purple-dim: rgba(168, 85, 247, 0.15);
+      --radius: 12px;
       --radius-sm: 8px;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
       --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -49,17 +51,17 @@
     }
 
     header {
-      background: rgba(19, 27, 46, 0.85);
+      background: rgba(19, 27, 46, 0.9);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
       z-index: 50;
-      padding: 1rem 1.5rem;
+      padding: 0.85rem 1.5rem;
     }
 
     .header-container {
-      max-width: 1380px;
+      max-width: 1440px;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -72,6 +74,7 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      text-decoration: none;
     }
 
     .brand-icon {
@@ -96,73 +99,105 @@
     }
 
     .brand-subtitle {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-muted);
       display: block;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.35rem;
+      background: rgba(11, 15, 25, 0.7);
+      padding: 0.3rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: var(--transition);
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-tab.active {
+      background: var(--primary);
+      color: #0b0f19;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
     }
 
     .stats-bar {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
+      gap: 0.65rem;
     }
 
     .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
       padding: 0.35rem 0.75rem;
       border-radius: 9999px;
-      border: 1px solid var(--border);
-      background: var(--surface);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       color: var(--text-muted);
+    }
+
+    .pill strong {
+      color: var(--text);
     }
 
     .pill.active {
       border-color: rgba(16, 185, 129, 0.4);
       background: var(--primary-dim);
-      color: #a7f3d0;
-    }
-
-    .pill.mealie {
-      border-color: rgba(99, 102, 241, 0.4);
-      background: var(--indigo-dim);
-      color: #c7d2fe;
+      color: var(--primary-light);
     }
 
     .dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--primary);
+      display: inline-block;
       box-shadow: 0 0 8px var(--primary);
     }
 
-    .header-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    button, .btn {
+    .btn {
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      padding: 0.5rem 0.95rem;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: var(--transition);
+      gap: 0.45rem;
       border: 1px solid transparent;
-      outline: none;
+      transition: var(--transition);
+      font-family: inherit;
+      text-decoration: none;
     }
 
     .btn-primary {
       background: var(--primary);
-      color: #064e3b;
+      color: #042f2e;
       font-weight: 600;
     }
 
@@ -179,22 +214,47 @@
 
     .btn-secondary:hover {
       background: var(--surface-hover);
-      border-color: #3b82f6;
+      border-color: var(--border-focus);
+    }
+
+    .btn-accent {
+      background: var(--indigo);
+      color: #fff;
+    }
+
+    .btn-accent:hover {
+      background: #4f46e5;
     }
 
     main {
-      max-width: 1380px;
-      margin: 1.5rem auto;
-      padding: 0 1.5rem;
-      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 1.5rem;
       flex: 1;
+      width: 100%;
     }
 
+    /* Vistas / Pestañas */
+    .view-content {
+      display: none;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .view-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Banner Analítico */
     .hero-banner {
-      background: linear-gradient(135deg, #131b2e 0%, #17223b 100%);
+      background: linear-gradient(135deg, rgba(19, 27, 46, 0.95), rgba(24, 34, 56, 0.75));
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.5rem 1.75rem;
+      padding: 1.5rem;
       margin-bottom: 1.5rem;
       display: flex;
       justify-content: space-between;
@@ -204,17 +264,68 @@
     }
 
     .hero-text h1 {
-      font-size: 1.35rem;
+      font-size: 1.45rem;
       font-weight: 700;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.01em;
     }
 
     .hero-text p {
       color: var(--text-muted);
       font-size: 0.9rem;
-      max-width: 680px;
+      max-width: 780px;
     }
 
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--stat-color, var(--primary));
+    }
+
+    .stat-title {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .stat-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Barra de Herramientas y Filtros */
     .toolbar {
       display: flex;
       justify-content: space-between;
@@ -224,74 +335,61 @@
       flex-wrap: wrap;
     }
 
-    .filters-group {
-      display: flex;
-      gap: 0.5rem;
-      background: var(--surface);
-      padding: 0.25rem;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-    }
-
-    .filter-chip {
-      padding: 0.4rem 0.85rem;
-      font-size: 0.82rem;
-      border-radius: 6px;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: var(--transition);
-      font-weight: 500;
-    }
-
-    .filter-chip:hover {
-      color: var(--text);
-    }
-
-    .filter-chip.active {
-      background: var(--surface-card);
-      color: var(--text);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .filter-chip.active.ready {
-      color: var(--primary-light);
-      background: var(--primary-dim);
-    }
-
     .search-box {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0.35rem 0.75rem;
+      padding: 0.45rem 0.85rem;
       gap: 0.5rem;
-      width: 280px;
+      min-width: 280px;
+      flex: 1;
+      max-width: 400px;
     }
 
     .search-box input {
       background: transparent;
       border: none;
       color: var(--text);
-      font-family: inherit;
-      font-size: 0.85rem;
-      width: 100%;
+      font-size: 0.88rem;
       outline: none;
+      width: 100%;
+      font-family: inherit;
     }
 
-    .search-box input::placeholder {
-      color: #64748b;
+    .filter-chip {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: inherit;
     }
 
-    .recipe-grid {
+    .filter-chip:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .filter-chip.active {
+      background: var(--primary-dim);
+      border-color: var(--primary);
+      color: var(--primary-light);
+      font-weight: 600;
+    }
+
+    /* Grid de Recetas y Productos */
+    .recipe-grid, .product-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
       gap: 1.25rem;
     }
 
-    .recipe-card {
+    .recipe-card, .product-card {
       background: var(--surface-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -300,85 +398,92 @@
       flex-direction: column;
       justify-content: space-between;
       transition: var(--transition);
-      box-shadow: var(--shadow);
       position: relative;
-      overflow: hidden;
     }
 
-    .recipe-card:hover {
-      border-color: rgba(99, 102, 241, 0.5);
+    .recipe-card:hover, .product-card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
       transform: translateY(-2px);
-    }
-
-    .recipe-card.ready {
-      border-color: rgba(16, 185, 129, 0.4);
-    }
-
-    .recipe-card.ready::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary), #3b82f6);
+      box-shadow: var(--shadow);
     }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      margin-bottom: 0.85rem;
       gap: 0.75rem;
-      margin-bottom: 0.75rem;
     }
 
     .card-title {
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 600;
       line-height: 1.35;
-      color: #ffffff;
+      color: #fff;
     }
 
-    .match-badge {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+    .badge {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
       font-weight: 600;
-      padding: 0.25rem 0.5rem;
-      border-radius: 6px;
       white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
-    .match-badge.ready {
+    .badge-primary {
       background: var(--primary-dim);
       color: var(--primary-light);
       border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    .match-badge.partial {
-      background: var(--amber-dim);
-      color: var(--amber);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+    .badge-commercial {
+      background: var(--indigo-dim);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
     }
 
-    .match-badge.low {
+    .badge-orphan {
       background: var(--rose-dim);
-      color: var(--rose);
+      color: #fda4af;
       border: 1px solid rgba(244, 63, 94, 0.3);
     }
 
-    .card-desc {
-      font-size: 0.83rem;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      line-height: 1.45;
+    .badge-amber {
+      background: var(--amber-dim);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
+    .badge-purple {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
+
+    /* Nutriscore Badges */
+    .nutriscore-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: #fff;
+      text-transform: uppercase;
+    }
+    .nutriscore-a { background: #038141; }
+    .nutriscore-b { background: #85bb2f; }
+    .nutriscore-c { background: #fecb02; color: #000; }
+    .nutriscore-d { background: #ee8100; }
+    .nutriscore-e { background: #e63e11; }
+
+    /* Barra de progreso de deconstrucción */
     .progress-bar-container {
-      margin-bottom: 1rem;
+      margin-bottom: 0.9rem;
     }
 
     .progress-labels {
@@ -390,71 +495,70 @@
     }
 
     .progress-bar {
-      height: 6px;
-      background: rgba(255, 255, 255, 0.08);
+      height: 7px;
+      background: #233252;
       border-radius: 9999px;
       overflow: hidden;
+      display: flex;
     }
 
     .progress-fill {
       height: 100%;
-      border-radius: 9999px;
-      transition: width 0.4s ease;
+      transition: width 0.3s ease;
     }
 
-    .progress-fill.ready {
-      background: var(--primary);
-    }
-
-    .progress-fill.partial {
-      background: var(--amber);
-    }
-
-    .progress-fill.low {
-      background: var(--rose);
-    }
-
-    .ingredients-breakdown {
-      background: var(--surface);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      border-radius: var(--radius-sm);
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      font-size: 0.8rem;
-    }
-
-    .ing-list {
-      list-style: none;
+    /* Lista de Ingredientes en Tarjeta */
+    .ing-pills {
       display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      max-height: 130px;
-      overflow-y: auto;
-    }
-
-    .ing-item {
-      display: flex;
-      align-items: center;
+      flex-wrap: wrap;
       gap: 0.4rem;
+      margin-bottom: 1rem;
     }
 
-    .ing-item.avail {
-      color: #94a3b8;
+    .ing-pill {
+      font-size: 0.78rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid transparent;
     }
 
-    .ing-item.missing {
+    .ing-pill:hover {
+      transform: scale(1.03);
+    }
+
+    .ing-pill.primary {
+      background: rgba(16, 185, 129, 0.12);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+
+    .ing-pill.commercial {
+      background: rgba(99, 102, 241, 0.12);
+      color: #c7d2fe;
+      border-color: rgba(99, 102, 241, 0.25);
+    }
+
+    .ing-pill.orphan {
+      background: rgba(244, 63, 94, 0.12);
       color: #fca5a5;
-      font-weight: 500;
+      border-color: rgba(244, 63, 94, 0.25);
     }
 
     .card-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 0.75rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      padding-top: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
 
     .tags-container {
@@ -464,21 +568,26 @@
     }
 
     .tag {
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.05);
       padding: 0.15rem 0.45rem;
       border-radius: 4px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
     }
 
-    /* Modal / Drawer */
+    /* Modal Generico */
     .modal-backdrop {
       position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
-      z-index: 100;
       display: none;
       align-items: center;
       justify-content: center;
+      z-index: 100;
       padding: 1.5rem;
     }
 
@@ -491,11 +600,12 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       width: 100%;
-      max-width: 800px;
-      max-height: 85vh;
+      max-width: 780px;
+      max-height: 88vh;
       overflow-y: auto;
-      padding: 1.5rem;
+      padding: 1.75rem;
       box-shadow: var(--shadow);
+      position: relative;
     }
 
     .modal-header {
@@ -503,50 +613,38 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
     }
 
     .modal-title {
-      font-size: 1.2rem;
-      font-weight: 600;
+      font-size: 1.25rem;
+      font-weight: 700;
     }
 
     .close-btn {
       background: transparent;
       border: none;
-      font-size: 1.25rem;
       color: var(--text-muted);
+      font-size: 1.4rem;
       cursor: pointer;
+      line-height: 1;
     }
 
-    .pantry-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      margin-top: 1rem;
+    .close-btn:hover {
+      color: var(--text);
     }
 
-    .pantry-table th {
-      text-align: left;
-      padding: 0.6rem;
-      background: var(--surface-card);
-      border-bottom: 1px solid var(--border);
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    .pantry-table td {
-      padding: 0.6rem;
-      border-bottom: 1px solid var(--border);
-    }
-
+    /* Dropzone de subida */
     .dropzone {
       border: 2px dashed var(--border);
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius);
       padding: 2rem;
       text-align: center;
+      background: rgba(24, 34, 56, 0.4);
       cursor: pointer;
       transition: var(--transition);
-      background: rgba(255, 255, 255, 0.01);
+      margin-bottom: 1.5rem;
     }
 
     .dropzone:hover {
@@ -554,6 +652,55 @@
       background: var(--primary-dim);
     }
 
+    /* Termómetro de Pureza */
+    .purity-thermometer {
+      background: #182238;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin: 1rem 0;
+    }
+
+    .thermometer-bar {
+      height: 12px;
+      background: #233252;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin: 0.6rem 0;
+      position: relative;
+    }
+
+    .thermometer-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+
+    /* Tablas elegantes */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 1rem;
+    }
+
+    .data-table th, .data-table td {
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table th {
+      color: var(--text-muted);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .data-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Toast */
     .toast {
       position: fixed;
       bottom: 2rem;
@@ -574,74 +721,490 @@
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+
+    /* Code Snippet Box */
+    .code-box {
+      background: #0d121f;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      color: #e2e8f0;
+      max-height: 380px;
+    }
   </style>
 </head>
 <body>
 
+  <!-- Header Sticky -->
   <header>
     <div class="header-container">
-      <div class="brand">
+      <a href="#" class="brand">
         <div class="brand-icon">🥦</div>
         <div>
           <span class="brand-title">PrimaryFoods</span>
-          <span class="brand-subtitle">Hub Nutricional & Motor "Despensa ➔ Receta"</span>
+          <span class="brand-subtitle">Hub Nutricional & Motor Analítico</span>
         </div>
-      </div>
+      </a>
 
+      <!-- Navegación por Pestañas -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('tab-analyzer', this)">🔬 Analizador Recetas</button>
+        <button class="nav-tab" onclick="switchTab('tab-off-search', this)">🥫 Buscador Base OFF</button>
+        <button class="nav-tab" onclick="switchTab('tab-deconstruct', this)">🏷️ Deconstructor Legal</button>
+        <button class="nav-tab" onclick="switchTab('tab-pantry-matching', this)">🍳 Despensa ➔ Receta</button>
+        <button class="nav-tab" onclick="switchTab('tab-mealie-sync', this)">🔄 Sincronizador Mealie</button>
+        <button class="nav-tab" onclick="switchTab('tab-export', this)">📦 Exportador Buscatureceta</button>
+        <button class="nav-tab" onclick="switchTab('tab-openapi', this)">📖 OpenAPI 3.1</button>
+      </nav>
+
+      <!-- Stats Bar & Acciones Rápidas -->
       <div class="stats-bar">
         <div class="pill active" id="pill-api">
           <span class="dot"></span>
           <span>API 8086: Online</span>
         </div>
-        <div class="pill mealie" id="pill-mealie">
-          <span>🍳 Mealie: <strong id="mealie-recipe-count">21 recetas</strong></span>
-        </div>
-        <div class="pill" id="pill-pantry">
-          <span>🥫 Despensa: <strong id="pantry-item-count">11 productos</strong></span>
-        </div>
-      </div>
-
-      <div class="header-actions">
-        <button class="btn btn-secondary" onclick="openPantryModal()">🥫 Ver Despensa</button>
-        <button class="btn btn-primary" onclick="syncMealieNow()" id="btn-sync-mealie">⚡ Sincronizar Mealie</button>
+        <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;" onclick="openPantryModal()">🥫 Despensa</button>
       </div>
     </div>
   </header>
 
   <main>
-    <section class="hero-banner">
-      <div class="hero-text">
-        <h1>🍳 Inspector Inteligente: ¿Qué podemos cocinar hoy?</h1>
-        <p>Este motor cruza en tiempo real el inventario de despensa de <strong>Buscatureceta</strong> contra tu catálogo de recetas en <strong>Mealie</strong>, identificando recetas listas para preparar y calculando los ingredientes faltantes para la lista de la compra.</p>
-      </div>
-      <div>
-        <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">
-          📥 Importar Paquete Buscatureceta
-        </button>
-        <input type="file" id="import-file-input" style="display: none" accept=".json" onchange="handlePackageUpload(event)">
-      </div>
-    </section>
+    <!-- ========================================== -->
+    <!-- TAB 1: ANALIZADOR Y ENRIQUECEDOR DE RECETAS -->
+    <!-- ========================================== -->
+    <div id="tab-analyzer" class="view-content active">
+      <section class="hero-banner">
+        <div class="hero-text">
+          <h1>🔬 Analizador Nutricional de Recetas & Deconstrucción</h1>
+          <p>Deconstrucción automática de ingredientes desde recetas capturadas (Schema.org / Mealie / Qwen-VL). Identifica bases primarias nobles BEDCA, resuelve equivalentes comerciales de supermercados españoles (OFF) y enriquece Buscatureceta con 0% ingredientes huérfanos.</p>
+        </div>
+        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="document.getElementById('import-recipes-input').click()">
+            📥 Importar Recetas JSON
+          </button>
+          <input type="file" id="import-recipes-input" style="display: none" accept=".json" onchange="handleRecipesUpload(event)">
+          <button class="btn btn-primary" onclick="reanalyzeAllRecipes()" id="btn-reanalyze">
+            ⚡ Re-analizar Recetario
+          </button>
+          <a class="btn btn-accent" href="/api/export/buscatureceta?download=true">
+            🚀 Exportar a Buscatureceta
+          </a>
+          <button class="btn btn-secondary" onclick="exportBatchToMealie()" id="btn-export-mealie-all" title="Exportar todas las recetas procesadas a Mealie">
+            📤 Sincronizar Todo con Mealie
+          </button>
+        </div>
+      </section>
 
-    <section class="toolbar">
-      <div class="filters-group">
-        <button class="filter-chip active ready" onclick="setFilter('ready', this)">🟢 100% Listas (<span id="count-ready">2</span>)</button>
-        <button class="filter-chip" onclick="setFilter('missing1', this)">🟡 Falta 1 ingrediente</button>
-        <button class="filter-chip" onclick="setFilter('all', this)">📋 Todas (<span id="count-all">21</span>)</button>
-      </div>
-
-      <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
-        <button class="btn btn-secondary" onclick="openShoppingModal()">🛒 Faltantes y Pack Buscatureceta</button>
-        <div class="search-box">
-          <span>🔍</span>
-          <input type="text" id="search-input" placeholder="Buscar por receta o ingrediente..." oninput="filterRecipes()">
+      <!-- Tarjetas de Estadísticas Globales -->
+      <div class="stats-grid">
+        <div class="stat-card" style="--stat-color: var(--primary);">
+          <div class="stat-title">Recetas Analizadas</div>
+          <div class="stat-value" id="stat-total-recipes">0</div>
+          <div class="stat-desc">Recetario activo en SQLite</div>
+        </div>
+        <div class="stat-card" style="--stat-color: #3b82f6;">
+          <div class="stat-title">Ingredientes Totales</div>
+          <div class="stat-value" id="stat-total-ings">0</div>
+          <div class="stat-desc">Desglosados y normalizados</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--primary-light);">
+          <div class="stat-title">Alimentos Primarios</div>
+          <div class="stat-value" id="stat-primary-matches">0 <span style="font-size: 0.9rem; color: var(--primary-light);" id="stat-primary-pct">(0%)</span></div>
+          <div class="stat-desc">Bases nobles BEDCA</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--indigo);">
+          <div class="stat-title">Alternativas OFF</div>
+          <div class="stat-value" id="stat-commercial-matches">0 <span style="font-size: 0.9rem; color: #a5b4fc;" id="stat-comm-pct">(0%)</span></div>
+          <div class="stat-desc">Productos comerciales OFF</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--rose);">
+          <div class="stat-title">Huérfanos Restantes</div>
+          <div class="stat-value" id="stat-unresolved">0 <span style="font-size: 0.9rem; color: #fda4af;" id="stat-unres-pct">(0%)</span></div>
+          <div class="stat-desc">Pendientes de mapeo</div>
         </div>
       </div>
-    </section>
 
-    <div class="recipe-grid" id="recipe-grid">
-      <!-- Tarjetas de recetas inyectadas por JS -->
+      <!-- Barra de Filtros de Recetas -->
+      <section class="toolbar">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="filter-chip active" onclick="setRecipeCategoryFilter('all', this)">📋 Todas (<span id="cat-count-all">0</span>)</button>
+          <button class="filter-chip" onclick="setRecipeCategoryFilter('almuerzo', this)">🥗 Almuerzo / Comida</button>
+          <button class="filter-chip" onclick="setRecipeCategoryFilter('cena', this)">🌙 Cena</button>
+          <button class="filter-chip" onclick="setRecipeCategoryFilter('desayuno', this)">☕ Desayuno</button>
+        </div>
+
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="recipe-search-input" placeholder="Buscar receta o ingrediente..." oninput="filterAnalyzedRecipes()">
+        </div>
+      </section>
+
+      <!-- Grid de Recetas Analizadas -->
+      <div class="recipe-grid" id="analyzed-recipes-grid">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: BUSCADOR INVERSO POR BASE OFF       -->
+    <!-- ========================================== -->
+    <div id="tab-off-search" class="view-content">
+      <section class="hero-banner">
+        <div class="hero-text">
+          <h1>🥫 Buscador Inverso por Base Primaria (OpenFoodFacts)</h1>
+          <p>Explora qué productos comerciales de supermercados españoles contienen un alimento noble como ingrediente mayoritario. Búsqueda indexada en $O(1)$ sobre más de 112.000 enlaces de pureza legal.</p>
+        </div>
+      </section>
+
+      <section class="toolbar" style="background: var(--surface); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border);">
+        <div style="display: flex; gap: 0.85rem; align-items: center; flex: 1; flex-wrap: wrap;">
+          <div class="search-box" style="max-width: 320px;">
+            <span>🥦</span>
+            <input type="text" id="base-search-input" placeholder="Ej: garbanzo, tomate, arroz, cacao..." value="garbanzo">
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-size: 0.82rem; color: var(--text-muted);">Pureza mín:</label>
+            <input type="range" id="min-purity-slider" min="0" max="100" value="70" step="5" oninput="document.getElementById('purity-val').innerText = this.value + '%'">
+            <span id="purity-val" style="font-family: monospace; font-size: 0.85rem; color: var(--primary); font-weight: 600;">70%</span>
+          </div>
+          <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: var(--text-muted); cursor: pointer;">
+            <input type="checkbox" id="main-base-only" checked> Solo ingrediente Nº 1 (por peso)
+          </label>
+          <button class="btn btn-primary" onclick="searchProductsByBase()">🔍 Buscar en OFF</button>
+        </div>
+      </section>
+
+      <div style="margin: 1rem 0; font-size: 0.85rem; color: var(--text-muted);">
+        Resultados para <strong id="base-search-term" style="color: var(--primary);">garbanzo</strong>: <span id="base-results-count">0</span> productos encontrados
+      </div>
+
+      <div class="product-grid" id="base-products-grid">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: DECONSTRUCTOR LEGAL (REG. UE 1169) -->
+    <!-- ========================================== -->
+    <div id="tab-deconstruct" class="view-content">
+      <section class="hero-banner">
+        <div class="hero-text">
+          <h1>🏷️ Deconstructor Normativo de Etiquetas (Reglamento UE 1169/2011)</h1>
+          <p>Analiza el etiquetado legal de cualquier código EAN: lista obligatoria en orden decreciente de peso, extracción de porcentajes QUID, categorización toxicológica de aditivos E-xxx y cálculo del termómetro de pureza noble.</p>
+        </div>
+      </section>
+
+      <section class="toolbar" style="background: var(--surface); padding: 1.25rem; border-radius: var(--radius); border: 1px solid var(--border);">
+        <div style="display: flex; gap: 0.75rem; align-items: center; width: 100%; flex-wrap: wrap;">
+          <div class="search-box" style="flex: 2; max-width: 500px;">
+            <span>📦</span>
+            <input type="text" id="ean-input" placeholder="Introduce código de barras EAN o busca por nombre..." value="01895614">
+          </div>
+          <button class="btn btn-primary" onclick="deconstructCurrentEAN()">🔬 Deconstruir Etiqueta</button>
+          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Muestras reales:</span>
+            <button class="filter-chip" onclick="quickDeconstruct('01895614')">🥫 Garbanzos Litoral</button>
+            <button class="filter-chip" onclick="quickDeconstruct('1228268800883')">🥫 Garbanzos Hacendado</button>
+            <button class="filter-chip" onclick="quickDeconstruct('0201940438773')">🍅 Tomate Frito Auchan</button>
+            <button class="filter-chip" onclick="quickDeconstruct('00014423')">🍪 Galletas Hacendado</button>
+            <button class="filter-chip" onclick="quickDeconstruct('8410148501833')">🌰 Nueces Borges</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="deconstruct-result-container" style="margin-top: 1.5rem;">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: DESPENSA ➔ RECETA (MATCHING)        -->
+    <!-- ========================================== -->
+    <div id="tab-pantry-matching" class="view-content">
+      <section class="hero-banner">
+        <div class="hero-text">
+          <h1>🍳 Inspector de Despensa: ¿Qué podemos cocinar hoy?</h1>
+          <p>Cruza en tiempo real el inventario de despensa de <strong>Buscatureceta</strong> contra tu recetario para cocinar sin desperdicio y generar la lista de la compra optimizada.</p>
+        </div>
+        <div>
+          <button class="btn btn-secondary" onclick="openShoppingModal()">🛒 Faltantes y Lista de Compra</button>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <div class="filters-group" style="display: flex; gap: 0.5rem;">
+          <button class="filter-chip active ready" onclick="setPantryFilter('ready', this)">🟢 100% Listas (<span id="count-ready">0</span>)</button>
+          <button class="filter-chip" onclick="setPantryFilter('missing1', this)">🟡 Falta 1 ingrediente</button>
+          <button class="filter-chip" onclick="setPantryFilter('all', this)">📋 Todas (<span id="count-pantry-all">0</span>)</button>
+        </div>
+      </section>
+
+      <div class="recipe-grid" id="pantry-recipe-grid">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB: SINCRONIZADOR & PUENTE MEALIE         -->
+    <!-- ========================================== -->
+    <div id="tab-mealie-sync" class="view-content">
+      <section class="hero-banner">
+        <div class="hero-text">
+          <h1>🔄 Sincronizador Bidireccional Mealie & Redes Sociales</h1>
+          <p>Supervisa y sincroniza recetas entre tu instancia de Mealie (altas desde Instagram, TikTok o YouTube vía <code>social-to-mealie</code>) y el motor de alimentos primarios PrimaryFoods. Detecta automáticamente diferencias, trae recetas nuevas y expórtalas hacia Mealie.</p>
+        </div>
+        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+          <button class="btn btn-primary" onclick="importAllNewFromMealie()" id="btn-import-all-new">
+            📥 Importar Todo lo Nuevo de Mealie
+          </button>
+          <button class="btn btn-accent" onclick="exportBatchToMealie()" id="btn-export-all-mealie">
+            📤 Subir Faltantes a Mealie
+          </button>
+          <button class="btn btn-secondary" onclick="loadMealieDiff(true)" id="btn-refresh-diff">
+            🔄 Refrescar Comparativa
+          </button>
+        </div>
+      </section>
+
+      <!-- Panel de Configuración de Mealie -->
+      <div style="background: var(--surface); padding: 1.25rem 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+            ⚙️ Configuración & Credenciales (config.json)
+            <span id="mealie-conn-badge" class="badge badge-primary" style="font-size: 0.7rem;">🟢 Verificando...</span>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--text-muted);" id="mealie-config-path-label">config.json</span>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
+          <div style="flex: 2; min-width: 260px;">
+            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">URL de Mealie</label>
+            <input type="text" id="mealie-cfg-url" placeholder="http://localhost:9925" style="width: 100%; padding: 0.45rem 0.75rem; background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 0.85rem;">
+          </div>
+          <div style="flex: 3; min-width: 280px;">
+            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">API Token / Key de Mealie</label>
+            <input type="password" id="mealie-cfg-token" placeholder="eyJhbGciOi..." style="width: 100%; padding: 0.45rem 0.75rem; background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 0.85rem;">
+          </div>
+          <button class="btn btn-secondary" onclick="toggleTokenVisibility(this)">👁️</button>
+          <button class="btn btn-primary" onclick="saveMealieConfig()">💾 Guardar Config</button>
+        </div>
+      </div>
+
+      <!-- Tarjetas de Estadísticas de Sincronización -->
+      <div class="stats-grid">
+        <div class="stat-card" style="--stat-color: #a855f7;">
+          <div class="stat-title">Nuevas en Mealie</div>
+          <div class="stat-value" id="stat-mealie-new">0</div>
+          <div class="stat-desc">Pendientes de importar a PrimaryFoods</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--primary);">
+          <div class="stat-title">Sincronizadas</div>
+          <div class="stat-value" id="stat-sync-both">0</div>
+          <div class="stat-desc">Presentes en ambas bases</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--indigo);">
+          <div class="stat-title">Solo en PrimaryFoods</div>
+          <div class="stat-value" id="stat-primary-only">0</div>
+          <div class="stat-desc">Pendientes de subir a Mealie</div>
+        </div>
+        <div class="stat-card" style="--stat-color: #3b82f6;">
+          <div class="stat-title">Total en Mealie</div>
+          <div class="stat-value" id="stat-mealie-total">0</div>
+          <div class="stat-desc">Instancia remota conectada</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--emerald);">
+          <div class="stat-title">Total en SQLite</div>
+          <div class="stat-value" id="stat-primary-total">0</div>
+          <div class="stat-desc">Recetas en PrimaryFoods</div>
+        </div>
+      </div>
+
+      <!-- Toolbar de Filtros & Búsqueda -->
+      <section class="toolbar">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="filter-chip active" onclick="setMealieDiffFilter('all', this)">📋 Todas (<span id="diff-count-all">0</span>)</button>
+          <button class="filter-chip" onclick="setMealieDiffFilter('new_in_mealie', this)" style="border-color: rgba(168, 85, 247, 0.4);">✨ Nuevas en Mealie (<span id="diff-count-new">0</span>)</button>
+          <button class="filter-chip" onclick="setMealieDiffFilter('only_in_primary', this)">📁 Solo en PrimaryFoods (<span id="diff-count-primary">0</span>)</button>
+          <button class="filter-chip" onclick="setMealieDiffFilter('in_both', this)">✅ Sincronizadas (<span id="diff-count-both">0</span>)</button>
+        </div>
+
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="mealie-diff-search-input" placeholder="Buscar por título o ingrediente..." oninput="filterMealieDiff()">
+        </div>
+      </section>
+
+      <!-- Grid de Comparativa -->
+      <div class="recipe-grid" id="mealie-diff-grid">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: EXPORTADOR ENRIQUECIDO A BUSCATURECETA -->
+    <!-- ========================================== -->
+    <div id="tab-export" class="view-content">
+      <section class="hero-banner">
+        <div class="hero-text">
+          <h1>📦 Exportador Enriquecido a Buscatureceta</h1>
+          <p>Genera y descarga el recetario enriquecido con IDs canónicos de alimentos primarios BEDCA y alternativas comerciales de supermercados españoles listas para usar en Buscatureceta.</p>
+        </div>
+        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+          <a class="btn btn-primary" href="/api/export/buscatureceta?download=true">
+            ⬇️ Descargar Paquete Completo (.json)
+          </a>
+          <a class="btn btn-secondary" href="/api/export/buscatureceta?format=recipes_only&download=true">
+            📑 Descargar Solo Recetas (.json)
+          </a>
+          <button class="btn btn-secondary" onclick="copyExportJSON()">
+            📋 Copiar JSON al Portapapeles
+          </button>
+        </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+        <div style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border);">
+          <h3 style="margin-bottom: 0.75rem;">🌟 ¿Qué enriquecimiento aporta PrimaryFoods?</h3>
+          <ul style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.8; margin-left: 1.25rem;">
+            <li><strong>Vinculación canónica BEDCA:</strong> Cada ingrediente cuenta con su <code style="color: var(--primary);">primaryFoodId</code> exacto para el cálculo automático de micronutrientes y polifenoles.</li>
+            <li><strong>Alternativas comerciales de supermercado:</strong> Sugerencias de compra reales en España (OFF) con Nutriscore, pureza y código EAN.</li>
+            <li><strong>0% Huérfanos:</strong> Resolución exhaustiva probada con el 100% de ingredientes resueltos.</li>
+            <li><strong>Compatibilidad Drop-in:</strong> Compatible directamente con la SPA de Buscatureceta y el archivo <code style="color: #60a5fa;">mediterranean_recipes.json</code>.</li>
+          </ul>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Vista previa de exportación (/api/export/buscatureceta):</span>
+            <span class="badge badge-primary">JSON 2.1.0</span>
+          </div>
+          <pre class="code-box" id="export-preview-box">Cargando previsualización...</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: DOCUMENTACIÓN OPENAPI 3.1           -->
+    <!-- ========================================== -->
+    <div id="tab-openapi" class="view-content">
+      <section class="hero-banner">
+        <div class="hero-text">
+          <h1>📖 Especificación OpenAPI 3.1 & Documentación Interactiva</h1>
+          <p>Contrato formal y documentado de todos los endpoints de PrimaryFoods: Alimentos Primarios, Recetario Inteligente, Matching con Despensa, OpenFoodFacts y Exportación a Buscatureceta.</p>
+        </div>
+        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+          <a class="btn btn-primary" href="/docs" target="_blank">
+            🚀 Abrir Documentación Scalar Completa
+          </a>
+          <a class="btn btn-secondary" href="/api/openapi.yaml" download="openapi.yaml">
+            ⬇️ Descargar YAML
+          </a>
+          <a class="btn btn-secondary" href="/api/openapi.json" download="openapi.json">
+            ⬇️ Descargar JSON
+          </a>
+        </div>
+      </section>
+
+      <div style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border);">
+        <h3 style="margin-bottom: 1rem;">🌐 Rutas Principales de la API</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Método</th>
+              <th>Ruta</th>
+              <th>Descripción</th>
+              <th>Etiqueta</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge" style="background: #1e3a8a; color: #93c5fd;">GET</span></td>
+              <td><code>/api/recipes/analyze</code></td>
+              <td>Análisis profundo de recetas con deconstrucción y alternativas OFF</td>
+              <td>Motor Recetas</td>
+              <td><a href="/api/recipes/analyze" target="_blank" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">Probar</a></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: #1e3a8a; color: #93c5fd;">GET</span></td>
+              <td><code>/api/products/by-base</code></td>
+              <td>Búsqueda inversa indexada de productos por base primaria</td>
+              <td>Productos Comerciales</td>
+              <td><a href="/api/products/by-base?primary=garbanzo&limit=5" target="_blank" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">Probar</a></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: #1e3a8a; color: #93c5fd;">GET</span></td>
+              <td><code>/api/products/{code}/deconstruct</code></td>
+              <td>Deconstrucción normativa (Reg. UE 1169/2011), QUID y aditivos</td>
+              <td>Productos Comerciales</td>
+              <td><a href="/api/products/8410712000010/deconstruct" target="_blank" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">Probar</a></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: #1e3a8a; color: #93c5fd;">GET</span></td>
+              <td><code>/api/export/buscatureceta</code></td>
+              <td>Exportación de recetas enriquecidas para Buscatureceta</td>
+              <td>Integración Buscatureceta</td>
+              <td><a href="/api/export/buscatureceta" target="_blank" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">Probar</a></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: #065f46; color: #6ee7b7;">POST</span></td>
+              <td><code>/api/recipes/import-json</code></td>
+              <td>Ingesta masiva de recetas Schema.org extraídas por IA / Qwen</td>
+              <td>Motor Recetas</td>
+              <td><span style="font-size: 0.75rem; color: var(--text-muted);">POST Body</span></td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background: #065f46; color: #6ee7b7;">POST</span></td>
+              <td><code>/api/mappings</code></td>
+              <td>Guardado persistente de asociaciones de ingredientes</td>
+              <td>Aprendizaje y Curación</td>
+              <td><span style="font-size: 0.75rem; color: var(--text-muted);">POST Body</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
+
+  <!-- Modal de Detalle de Ingrediente & Alternativas Supermercado -->
+  <div class="modal-backdrop" id="ingredient-modal" onclick="if(event.target === this) closeIngredientModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="ing-modal-title">Detalle del Ingrediente</h2>
+        <button class="close-btn" onclick="closeIngredientModal()">✕</button>
+      </div>
+      <div id="ing-modal-body">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Mapeo Manual -->
+  <div class="modal-backdrop" id="mapping-modal" onclick="if(event.target === this) closeMappingModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">🔗 Mapear Ingrediente a Base Primaria</h2>
+        <button class="close-btn" onclick="closeMappingModal()">✕</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
+        Asocia este término a un alimento primario noble BEDCA para que las futuras recetas lo reconozcan en 0ms.
+      </p>
+      <div style="margin-bottom: 1rem;">
+        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.35rem;">Término original de la receta:</label>
+        <input type="text" id="map-raw-term" readonly style="width: 100%; background: #0d121f; border: 1px solid var(--border); padding: 0.55rem; border-radius: 6px; color: #fff; font-family: monospace;">
+      </div>
+      <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.35rem;">Alimento Primario BEDCA de destino:</label>
+        <input type="text" id="map-primary-id" placeholder="Ej: garbanzo, tomate, aceite_oliva, avena..." style="width: 100%; background: var(--surface-card); border: 1px solid var(--border); padding: 0.55rem; border-radius: 6px; color: #fff;">
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button class="btn btn-secondary" onclick="closeMappingModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveManualMapping()">💾 Guardar Mapeo Persistente</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal de Despensa e Ingestión -->
   <div class="modal-backdrop" id="pantry-modal" onclick="if(event.target === this) closePantryModal()">
@@ -657,402 +1220,1072 @@
         <input type="file" id="modal-file-input" style="display: none" accept=".json" onchange="handlePackageUpload(event)">
       </div>
 
-      <table class="pantry-table">
+      <table class="data-table" id="pantry-table">
         <thead>
           <tr>
             <th>Producto</th>
+            <th>Alimento Primario</th>
             <th>Cantidad</th>
-            <th>Zona</th>
-            <th>Código</th>
+            <th>Categoría</th>
           </tr>
         </thead>
         <tbody id="pantry-tbody">
-          <!-- Filas de despensa -->
+          <!-- Inyectado por JS -->
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Modal de Faltantes y Exportación para Buscatureceta -->
+  <!-- Modal de Faltantes y Compra -->
   <div class="modal-backdrop" id="shopping-modal" onclick="if(event.target === this) closeShoppingModal()">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 class="modal-title">🛒 Ingredientes Faltantes & Pack Buscatureceta</h2>
+        <h2 class="modal-title">🛒 Ingredientes Faltantes & Lista de Compra</h2>
         <button class="close-btn" onclick="closeShoppingModal()">✕</button>
       </div>
-
-      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
-        Aquí tienes los ingredientes que te faltan en la despensa para preparar las recetas del catálogo. Puedes copiar la lista para hacer la compra o descargar el <strong>Paquete Completo (Recetas + Agenda + Compra)</strong> preparado para Buscatureceta.
-      </p>
-
-      <div style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
         <button class="btn btn-primary" onclick="copyFullShoppingList()">📋 Copiar Lista de la Compra</button>
-        <button class="btn btn-secondary" onclick="downloadBuscaturecetaPack()">📦 Descargar Paquete Buscatureceta (.json)</button>
+        <button class="btn btn-secondary" onclick="downloadBuscaturecetaPack()">📦 Descargar Pack Buscatureceta</button>
       </div>
-
-      <table class="pantry-table">
+      <table class="data-table">
         <thead>
           <tr>
             <th>Ingrediente Faltante</th>
-            <th>Receta Asociada</th>
+            <th>Receta</th>
             <th>Estado</th>
           </tr>
         </thead>
         <tbody id="shopping-tbody">
-          <!-- Filas inyectadas -->
+          <!-- Inyectado por JS -->
         </tbody>
       </table>
     </div>
   </div>
 
+  <!-- Toast Notificaciones -->
   <div class="toast" id="toast"></div>
 
+  <!-- LÓGICA JAVASCRIPT -->
   <script>
+    let allAnalyses = [];
     let allMatches = [];
-    let currentFilter = 'ready'; // 'ready', 'missing1', 'all'
+    let currentCategoryFilter = 'all';
+    let currentPantryFilter = 'ready';
+    let cachedExportJSON = null;
 
     async function init() {
-      await loadMealieStatus();
+      await loadAnalyzedRecipes();
       await loadPantry();
       await loadMatchingRecipes();
+      loadExportPreview();
+      loadMealieConfig();
+      loadMealieDiff();
     }
 
-    async function loadMealieStatus() {
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+      if (el) el.classList.add('active');
+      const target = document.getElementById(tabId);
+      if (target) target.classList.add('active');
+
+      if (tabId === 'tab-off-search' && document.getElementById('base-products-grid').children.length === 0) {
+        searchProductsByBase();
+      }
+      if (tabId === 'tab-deconstruct' && !document.getElementById('deconstruct-result-container').hasChildNodes()) {
+        deconstructCurrentEAN();
+      }
+      if (tabId === 'tab-mealie-sync') {
+        loadMealieDiff();
+        loadMealieConfig();
+      }
+    }
+
+    // --- TAB 1: ANALIZADOR DE RECETAS ---
+    async function loadAnalyzedRecipes() {
       try {
-        const res = await fetch('/api/mealie/status');
+        const res = await fetch('/api/recipes/analyze');
+        if (!res.ok) return;
         const data = await res.json();
-        if (data.connected) {
-          document.getElementById('mealie-recipe-count').innerText = `${data.cachedRecipes} recetas`;
+        allAnalyses = data.analyses || [];
+
+        // Actualizar estadísticas globales
+        document.getElementById('stat-total-recipes').innerText = data.totalRecipes || 0;
+        document.getElementById('stat-total-ings').innerText = data.totalIngredients || 0;
+        document.getElementById('stat-primary-matches').innerHTML = `${data.primaryMatches || 0} <span style="font-size: 0.9rem; color: var(--primary-light);">(${((data.primaryMatches / (data.totalIngredients || 1)) * 100).toFixed(1)}%)</span>`;
+        document.getElementById('stat-commercial-matches').innerHTML = `${data.commercialMatches || 0} <span style="font-size: 0.9rem; color: #a5b4fc;">(${((data.commercialMatches / (data.totalIngredients || 1)) * 100).toFixed(1)}%)</span>`;
+        document.getElementById('stat-unresolved').innerHTML = `${data.unresolvedCount || 0} <span style="font-size: 0.9rem; color: #fda4af;">(${((data.unresolvedCount / (data.totalIngredients || 1)) * 100).toFixed(1)}%)</span>`;
+
+        document.getElementById('cat-count-all').innerText = allAnalyses.length;
+        renderAnalyzedRecipes();
+      } catch (err) {
+        console.error("Error cargando recetas analizadas:", err);
+      }
+    }
+
+    function renderAnalyzedRecipes() {
+      const grid = document.getElementById('analyzed-recipes-grid');
+      const q = (document.getElementById('recipe-search-input')?.value || '').toLowerCase().trim();
+
+      const filtered = allAnalyses.filter(a => {
+        const r = a.recipe;
+        if (currentCategoryFilter !== 'all') {
+          const cat = (r.tags && r.tags.length > 0 ? r.tags[0] : '').toLowerCase();
+          if (!cat.includes(currentCategoryFilter)) return false;
         }
-      } catch (err) {
-        console.error('Error cargando estado Mealie:', err);
-      }
-    }
-
-    async function loadPantry() {
-      try {
-        const res = await fetch('/api/pantry');
-        const data = await res.json();
-        const items = data.items || [];
-        document.getElementById('pantry-item-count').innerText = `${items.length} productos`;
-
-        const tbody = document.getElementById('pantry-tbody');
-        tbody.innerHTML = items.map(p => `
-          <tr>
-            <td><strong>${escapeHtml(p.productName)}</strong></td>
-            <td>${p.amount} ${p.unit}</td>
-            <td><span class="tag">${p.pantryZone || 'food'}</span></td>
-            <td style="font-family: monospace; color: var(--text-muted); font-size: 0.78rem;">${p.productCode}</td>
-          </tr>
-        `).join('');
-      } catch (err) {
-        console.error('Error cargando despensa:', err);
-      }
-    }
-
-    async function loadMatchingRecipes() {
-      try {
-        const res = await fetch('/api/recipes/matching');
-        const data = await res.json();
-        allMatches = data.matches || [];
-
-        const readyCount = data.readyToCookCount || 0;
-        document.getElementById('count-ready').innerText = readyCount;
-        document.getElementById('count-all').innerText = allMatches.length;
-
-        renderCards();
-      } catch (err) {
-        console.error('Error cargando matching:', err);
-      }
-    }
-
-    function setFilter(filter, el) {
-      currentFilter = filter;
-      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      renderCards();
-    }
-
-    function filterRecipes() {
-      renderCards();
-    }
-
-    function renderCards() {
-      const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
-      const grid = document.getElementById('recipe-grid');
-
-      let filtered = allMatches.filter(m => {
-        // Filtro por categoría
-        if (currentFilter === 'ready' && !m.isReadyToCook) return false;
-        if (currentFilter === 'missing1' && m.missingCount !== 1) return false;
-
-        // Filtro por texto
-        if (query) {
-          const matchName = m.recipe.name.toLowerCase().includes(query);
-          const matchIng = (m.recipe.ingredients || []).some(i => i.name.toLowerCase().includes(query));
-          if (!matchName && !matchIng) return false;
+        if (q) {
+          const matchTitle = r.name.toLowerCase().includes(q);
+          const matchIng = (r.ingredients || []).some(i => i.name.toLowerCase().includes(q));
+          if (!matchTitle && !matchIng) return false;
         }
-
         return true;
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-            <p style="font-size: 2rem; margin-bottom: 0.5rem;">🍽️</p>
-            <p>No se encontraron recetas con los filtros seleccionados.</p>
-          </div>
-        `;
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">No se encontraron recetas con los filtros aplicados.</div>';
         return;
       }
 
-      grid.innerHTML = filtered.map(m => {
-        const r = m.recipe;
-        const isReady = m.isReadyToCook;
-        const pct = Math.round(m.matchPercentage);
-        const statusClass = isReady ? 'ready' : (m.missingCount === 1 ? 'partial' : 'low');
+      grid.innerHTML = filtered.map((a, idx) => {
+        const r = a.recipe;
+        const total = a.totalIngredients || 1;
+        const primPct = Math.round((a.primaryCount / total) * 100);
+        const commPct = Math.round((a.commercialCount / total) * 100);
+        const unresPct = 100 - primPct - commPct;
 
-        const availList = (m.availableIngredients || []).map(ing => `
-          <li class="ing-item avail">
-            <span>✅</span> <span>${escapeHtml(ing)}</span>
-          </li>
-        `).join('');
+        const ingPills = (a.resolutions || []).map(res => {
+          let badgeClass = 'primary';
+          let icon = '🟢';
+          let statusText = 'Noble (BEDCA)';
+          if (res.status === 'commercial_match') {
+            badgeClass = 'commercial';
+            icon = '🔵';
+            statusText = 'OFF Comercial';
+          } else if (res.status === 'unresolved') {
+            badgeClass = 'orphan';
+            icon = '🔴';
+            statusText = 'Huérfano';
+          }
 
-        const missingList = (m.missingIngredients || []).map(ing => `
-          <li class="ing-item missing">
-            <span>❌</span> <span>${escapeHtml(ing)} (Falta)</span>
-          </li>
-        `).join('');
+          return `
+            <span class="ing-pill ${badgeClass}" title="${statusText}: ${escapeHtml(res.normalizedName)}" onclick="openIngredientModal(${idx}, '${escapeHtml(res.originalText)}')">
+              ${icon} ${escapeHtml(res.originalText)}
+            </span>
+          `;
+        }).join('');
 
         return `
-          <div class="recipe-card ${isReady ? 'ready' : ''}">
+          <div class="recipe-card" style="overflow: hidden;">
+            ${r.image ? `
+              <div style="height: 140px; margin: -1.25rem -1.25rem 1rem -1.25rem; overflow: hidden; background: #0f172a; position: relative;">
+                <img src="${r.image}" alt="${escapeHtml(r.name)}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
+              </div>
+            ` : ''}
             <div>
               <div class="card-header">
                 <h3 class="card-title">${escapeHtml(r.name)}</h3>
-                <span class="match-badge ${statusClass}">
-                  ${isReady ? '🟢 100% Lista' : `${pct}% Cobertura`}
+                <span class="badge ${unresPct === 0 ? 'badge-primary' : 'badge-amber'}">
+                  ${unresPct === 0 ? '✓ 100% Resuelta' : `⚠️ ${a.unresolvedCount} huérfanos`}
                 </span>
               </div>
-              
-              <p class="card-desc">${escapeHtml(r.description || 'Receta saludable indexada desde Mealie.')}</p>
 
               <div class="progress-bar-container">
                 <div class="progress-labels">
-                  <span>Disponibilidad despensa</span>
-                  <span><strong>${m.availableCount}</strong> / ${m.totalIngredients} ingredientes</span>
+                  <span>${primPct}% Primario / ${commPct}% Comercial</span>
+                  <span style="font-weight: 600; color: ${a.matchPercentage >= 90 ? 'var(--primary)' : 'var(--amber)'};">${Math.round(a.matchPercentage)}% Cobertura</span>
                 </div>
                 <div class="progress-bar">
-                  <div class="progress-fill ${statusClass}" style="width: ${pct}%;"></div>
+                  <div class="progress-fill" style="width: ${primPct}%; background: var(--primary);"></div>
+                  <div class="progress-fill" style="width: ${commPct}%; background: var(--indigo);"></div>
+                  <div class="progress-fill" style="width: ${unresPct}%; background: var(--rose);"></div>
                 </div>
               </div>
 
-              <div class="ingredients-breakdown">
-                <ul class="ing-list">
-                  ${missingList}
-                  ${availList}
-                </ul>
+              <div class="ing-pills">
+                ${ingPills}
               </div>
-
-              ${!isReady && m.missingCount > 0 ? `
-                <div style="margin-top: -0.5rem; margin-bottom: 0.75rem; display: flex; justify-content: flex-end;">
-                  <button class="btn btn-secondary" style="font-size: 0.76rem; padding: 0.25rem 0.55rem; gap: 0.25rem;" onclick="copyMissingIngredients('${escapeHtml(r.name)}', ${JSON.stringify(m.missingIngredients).replace(/"/g, '&quot;')})">
-                    📋 Copiar faltantes (${m.missingCount})
-                  </button>
-                </div>
-              ` : ''}
             </div>
 
             <div class="card-footer">
               <div class="tags-container">
                 ${(r.tags || []).slice(0, 3).map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('')}
-                ${r.yield ? `<span class="tag">👥 ${r.yield} raciones</span>` : ''}
+                ${r.yield ? `<span class="tag">👥 ${r.yield} rac.</span>` : ''}
+                ${r.totalTime ? `<span class="tag">⏱️ ${escapeHtml(r.totalTime)}</span>` : ''}
               </div>
-              <span style="font-family: monospace; font-size: 0.72rem; color: var(--text-muted);">${r.source || 'mealie'}</span>
+              <div style="display: flex; gap: 0.35rem;">
+                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" onclick="exportSingleRecipeToMealie('${escapeHtml(r.slug || r.id)}', this)" title="Exportar o actualizar esta receta en Mealie">
+                  📤 Mealie
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" onclick="showRecipeInstructions(${idx})">
+                  📖 Ver Pasos
+                </button>
+              </div>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    async function syncMealieNow() {
-      const btn = document.getElementById('btn-sync-mealie');
-      btn.innerText = '⏳ Sincronizando...';
-      btn.disabled = true;
+    function setRecipeCategoryFilter(cat, btn) {
+      currentCategoryFilter = cat;
+      document.querySelectorAll('#tab-analyzer .filter-chip').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderAnalyzedRecipes();
+    }
 
+    function filterAnalyzedRecipes() {
+      renderAnalyzedRecipes();
+    }
+
+    async function reanalyzeAllRecipes() {
+      const btn = document.getElementById('btn-reanalyze');
+      btn.innerText = '⏳ Analizando...';
+      btn.disabled = true;
       try {
-        const res = await fetch('/api/mealie/sync', { method: 'POST' });
-        const data = await res.json();
-        if (data.ok) {
-          showToast(`✅ Sincronizadas ${data.syncedRecipes} recetas desde Mealie`);
-          await loadMealieStatus();
-          await loadMatchingRecipes();
-        } else {
-          showToast(`❌ Error sincronizando Mealie: ${data.error || 'Error'}`);
-        }
+        await loadAnalyzedRecipes();
+        showToast('⚡ Recetario analizado con éxito contra BEDCA y OpenFoodFacts');
       } catch (err) {
-        showToast(`❌ Error de conexión: ${err.message}`);
+        showToast('❌ Error al analizar recetario: ' + err.message);
       } finally {
-        btn.innerText = '⚡ Sincronizar Mealie';
+        btn.innerText = '⚡ Re-analizar Recetario';
         btn.disabled = false;
       }
     }
 
-    async function handlePackageUpload(event) {
+    async function exportSingleRecipeToMealie(slug, btn) {
+      if (!slug) return;
+      const originalText = btn ? btn.innerText : '';
+      if (btn) {
+        btn.innerText = '⏳ Enviando...';
+        btn.disabled = true;
+      }
+      try {
+        const res = await fetch(`/api/mealie/export?slug=${encodeURIComponent(slug)}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'ok' && data.totalExported > 0) {
+          const item = data.exported[0];
+          showToast(`✓ Receta enviada a Mealie: ${item.name}`);
+          if (btn) btn.innerText = '✓ En Mealie';
+        } else {
+          const errMsg = data.failed && data.failed.length > 0 ? data.failed[0].error : (data.error || 'Error desconocido');
+          showToast(`❌ Error exportando a Mealie: ${errMsg}`);
+          if (btn) btn.innerText = originalText;
+        }
+      } catch (err) {
+        showToast('❌ Error conectando con Mealie: ' + err.message);
+        if (btn) btn.innerText = originalText;
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function exportBatchToMealie() {
+      const btn = document.getElementById('btn-export-mealie-all');
+      if (btn) {
+        btn.innerText = '⏳ Exportando a Mealie...';
+        btn.disabled = true;
+      }
+      try {
+        const res = await fetch('/api/mealie/export', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'ok') {
+          showToast(`✓ Sincronizadas ${data.totalExported} recetas en Mealie (${data.mealieBaseUrl})`);
+        } else {
+          showToast('❌ Error sincronizando con Mealie: ' + (data.error || 'Error'));
+        }
+      } catch (err) {
+        showToast('❌ Error al conectar con Mealie: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.innerText = '📤 Sincronizar Todo con Mealie';
+          btn.disabled = false;
+        }
+      }
+    }
+
+    async function handleRecipesUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       try {
         const text = await file.text();
         const json = JSON.parse(text);
-
-        const res = await fetch('/api/sync/buscatureceta', {
+        const res = await fetch('/api/recipes/import-json', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(json)
         });
-
         const data = await res.json();
-        if (data.ok) {
-          showToast(`📦 Sincronizados ${data.pantryItemsCount} productos y ${data.diaryVersionsCount} revisiones`);
-          closePantryModal();
-          await loadPantry();
-          await loadMatchingRecipes();
+        if (data.status === 'ok') {
+          showToast(`📥 Importadas ${data.imported} recetas correctamente`);
+          await loadAnalyzedRecipes();
         } else {
-          showToast(`❌ Error en sincronización: ${data.error || 'Error'}`);
+          showToast('❌ Error en importación: ' + (data.error || 'Desconocido'));
         }
       } catch (err) {
-        showToast(`❌ Archivo JSON no válido: ${err.message}`);
+        showToast('❌ Error de archivo: ' + err.message);
       }
     }
 
-    function openPantryModal() {
-      document.getElementById('pantry-modal').classList.add('open');
-    }
+    function openIngredientModal(recipeIdx, rawTerm) {
+      const analysis = allAnalyses[recipeIdx];
+      if (!analysis) return;
+      const res = (analysis.resolutions || []).find(r => r.originalText === rawTerm);
+      if (!res) return;
 
-    function closePantryModal() {
-      document.getElementById('pantry-modal').classList.remove('open');
-    }
+      document.getElementById('ing-modal-title').innerText = `Ingrediente: ${res.originalText}`;
+      const body = document.getElementById('ing-modal-body');
 
-    function copyMissingIngredients(recipeName, missingList) {
-      if (!missingList || missingList.length === 0) return;
-      const text = `🛒 Faltantes para "${recipeName}":\n` + missingList.map(i => `• ${i}`).join('\n');
-      navigator.clipboard.writeText(text).then(() => {
-        showToast(`📋 ${missingList.length} faltante(s) de "${recipeName}" copiado(s)`);
-      }).catch(() => {
-        showToast(`📋 Copiado: ${missingList.join(', ')}`);
-      });
-    }
+      let html = '';
+      if (res.status === 'primary_match' && res.primaryFood) {
+        const pf = res.primaryFood;
+        const alts = res.commercialAlternatives || [];
+        html = `
+          <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <h3 style="color: var(--primary-light);">${escapeHtml(pf.name)}</h3>
+              <span class="badge badge-primary">Base Noble BEDCA</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Categoría: <strong>${escapeHtml(pf.category || 'General')}</strong> | ID: <code>${escapeHtml(pf.id)}</code></p>
+            ${pf.aliases && pf.aliases.length > 0 ? `<p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;">Sinónimos: ${pf.aliases.slice(0, 5).join(', ')}</p>` : ''}
+          </div>
 
-    function openShoppingModal() {
-      const tbody = document.getElementById('shopping-tbody');
-      const missingMap = [];
-      allMatches.forEach(m => {
-        if (m.missingIngredients && m.missingIngredients.length > 0) {
-          m.missingIngredients.forEach(ing => {
-            missingMap.push({
-              ing: ing,
-              recipe: m.recipe.name,
-              recipeSlug: m.recipe.slug,
-              missingCount: m.missingCount
+          <h4 style="margin-bottom: 0.75rem; font-size: 0.95rem;">🛒 Alternativas en Supermercados Españoles (OpenFoodFacts):</h4>
+        `;
+
+        if (alts.length === 0) {
+          html += '<p style="color: var(--text-muted); font-size: 0.85rem;">Consultando sugerencias comerciales para este ingrediente noble...</p>';
+          // Búsqueda en vivo de sugerencias OFF
+          fetch(`/api/products/by-base?primary=${encodeURIComponent(res.normalizedName)}&limit=3&min_purity=50`)
+            .then(r => r.json())
+            .then(data => {
+              if (data.products && data.products.length > 0) {
+                const altsHtml = data.products.map(p => `
+                  <div style="background: var(--surface-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <strong>${escapeHtml(p.product?.productName || p.product?.name || 'Producto')}</strong>
+                      <div style="font-size: 0.78rem; color: var(--text-muted);">Marca: ${escapeHtml(p.product?.brands || 'Marca blanca')} | EAN: <code>${p.product?.code || ''}</code></div>
+                    </div>
+                    <div style="text-align: right;">
+                      <span class="nutriscore-badge nutriscore-${(p.product?.nutriscoreGrade || 'c').toLowerCase()}">${(p.product?.nutriscoreGrade || 'C').toUpperCase()}</span>
+                      <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600; margin-top: 0.25rem;">${Math.round(p.purityScore || 90)}% pureza</div>
+                    </div>
+                  </div>
+                `).join('');
+                document.getElementById('async-alts-container').innerHTML = altsHtml;
+              }
             });
-          });
+          html += '<div id="async-alts-container"></div>';
+        } else {
+          html += alts.map(p => `
+            <div style="background: var(--surface-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>${escapeHtml(p.productName || p.name || 'Producto')}</strong>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Marca: ${escapeHtml(p.brands || 'Comercial')} | EAN: <code>${p.code}</code></div>
+              </div>
+              <div style="text-align: right;">
+                <span class="nutriscore-badge nutriscore-${(p.nutriscoreGrade || 'c').toLowerCase()}">${(p.nutriscoreGrade || 'C').toUpperCase()}</span>
+              </div>
+            </div>
+          `).join('');
         }
-      });
-
-      if (missingMap.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">¡Tu despensa tiene el 100% de ingredientes para todas las recetas activas! 🎉</td></tr>';
+      } else if (res.status === 'commercial_match' && res.commercialAlternatives && res.commercialAlternatives.length > 0) {
+        const comm = res.commercialAlternatives[0];
+        html = `
+          <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <h3 style="color: #a5b4fc;">${escapeHtml(comm.productName || res.originalText)}</h3>
+              <span class="badge badge-commercial">Producto Comercial OFF</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">EAN: <code>${comm.code}</code> | Marca: <strong>${escapeHtml(comm.brands || 'Genérica')}</strong></p>
+            ${comm.ingredientsText ? `<p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; background: rgba(0,0,0,0.25); padding: 0.5rem; border-radius: 6px;">Etiqueta: <em>${escapeHtml(comm.ingredientsText)}</em></p>` : ''}
+          </div>
+          <button class="btn btn-secondary" onclick="quickDeconstruct('${comm.code}'); closeIngredientModal(); switchTab('tab-deconstruct', document.querySelectorAll('.nav-tab')[2]);">
+            🏷️ Deconstruir Etiqueta EAN
+          </button>
+        `;
       } else {
-        tbody.innerHTML = missingMap.map(item => `
+        html = `
+          <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem;">
+            <h3 style="color: #fda4af;">Ingrediente Huérfano</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+              Este ingrediente no se resolvió automáticamente en BEDCA ni en los productos comerciales indexados.
+            </p>
+          </div>
+          <button class="btn btn-primary" onclick="openMappingModal('${escapeHtml(res.originalText)}'); closeIngredientModal();">
+            🔗 Mapear Manualmente
+          </button>
+        `;
+      }
+
+      body.innerHTML = html;
+      document.getElementById('ingredient-modal').classList.add('open');
+    }
+
+    function closeIngredientModal() {
+      document.getElementById('ingredient-modal').classList.remove('open');
+    }
+
+    function showRecipeInstructions(idx) {
+      const a = allAnalyses[idx];
+      if (!a) return;
+      const r = a.recipe;
+      document.getElementById('ing-modal-title').innerText = r.name;
+      const body = document.getElementById('ing-modal-body');
+      body.innerHTML = `
+        ${r.image ? `
+          <div style="width: 100%; height: 220px; border-radius: 0.5rem; overflow: hidden; margin-bottom: 1rem; background: #0f172a;">
+            <img src="${r.image}" alt="${escapeHtml(r.name)}" style="width: 100%; height: 100%; object-fit: cover;" />
+          </div>
+        ` : ''}
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">${escapeHtml(r.description || '')}</p>
+        <h4 style="margin-bottom: 0.5rem;">Instrucciones de preparación:</h4>
+        <ol style="margin-left: 1.25rem; line-height: 1.8; font-size: 0.88rem; color: var(--text);">
+          ${(r.instructions || []).map(step => `<li>${escapeHtml(step)}</li>`).join('')}
+        </ol>
+      `;
+      document.getElementById('ingredient-modal').classList.add('open');
+    }
+
+    // --- TAB 2: BUSCADOR INVERSO POR BASE OFF ---
+    async function searchProductsByBase() {
+      const primary = document.getElementById('base-search-input').value.trim() || 'garbanzo';
+      const minPurity = document.getElementById('min-purity-slider').value;
+      const mainOnly = document.getElementById('main-base-only').checked;
+
+      document.getElementById('base-search-term').innerText = primary;
+      const grid = document.getElementById('base-products-grid');
+      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">Buscando productos en OFF...</div>';
+
+      try {
+        const res = await fetch(`/api/products/by-base?primary=${encodeURIComponent(primary)}&min_purity=${minPurity}&main=${mainOnly}&limit=24`);
+        const data = await res.json();
+        const prods = data.products || [];
+        document.getElementById('base-results-count').innerText = prods.length;
+
+        if (prods.length === 0) {
+          grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No se encontraron productos con esa base y umbral de pureza.</div>';
+          return;
+        }
+
+        grid.innerHTML = prods.map(item => {
+          const p = item.product || item;
+          const nutriscore = (p.nutriscoreGrade || p.nutriscore_grade || 'c').toLowerCase();
+          const purity = Math.round(item.purityScore || 85);
+
+          return `
+            <div class="product-card">
+              <div>
+                <div class="card-header">
+                  <div>
+                    <h4 class="card-title" style="font-size: 1rem;">${escapeHtml(p.productName || p.name || 'Producto')}</h4>
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(p.brands || 'Sin marca')}</span>
+                  </div>
+                  <span class="nutriscore-badge nutriscore-${nutriscore}">${nutriscore.toUpperCase()}</span>
+                </div>
+
+                <div class="thermometer-bar" style="margin-bottom: 0.65rem;">
+                  <div class="thermometer-fill" style="width: ${purity}%; background: ${purity >= 80 ? 'var(--primary)' : 'var(--amber)'};"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                  <span>Pureza noble estimada:</span>
+                  <strong style="color: ${purity >= 80 ? 'var(--primary-light)' : 'var(--amber)'};">${purity}%</strong>
+                </div>
+
+                ${p.ingredientsText ? `
+                  <p style="font-size: 0.75rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 0.45rem; border-radius: 6px; margin-bottom: 0.75rem; max-height: 48px; overflow: hidden; text-overflow: ellipsis;">
+                    ${escapeHtml(p.ingredientsText)}
+                  </p>
+                ` : ''}
+              </div>
+
+              <div class="card-footer">
+                <span style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">EAN: ${p.code}</span>
+                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;" onclick="quickDeconstruct('${p.code}')">
+                  🔬 Deconstruir
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; color: var(--rose); padding: 2rem;">Error: ${err.message}</div>`;
+      }
+    }
+
+    // --- TAB 3: DECONSTRUCTOR LEGAL ---
+    function quickDeconstruct(code) {
+      document.getElementById('ean-input').value = code;
+      switchTab('tab-deconstruct', document.querySelectorAll('.nav-tab')[2]);
+      deconstructCurrentEAN();
+    }
+
+    async function deconstructCurrentEAN() {
+      let code = document.getElementById('ean-input').value.trim();
+      const container = document.getElementById('deconstruct-result-container');
+      if (!code) return;
+
+      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">Analizando etiquetado legal bajo Reglamento UE 1169/2011...</div>';
+
+      try {
+        let res = await fetch(`/api/products/${encodeURIComponent(code)}/deconstruct`);
+        if (!res.ok) {
+          // Si no es un código directo, intentar buscar producto por texto y coger el primero con ingredientes
+          const sRes = await fetch(`/api/products/search?q=${encodeURIComponent(code)}&limit=1`);
+          const sData = await sRes.json();
+          if (sData.products && sData.products.length > 0) {
+            code = sData.products[0].code;
+            document.getElementById('ean-input').value = code;
+            res = await fetch(`/api/products/${encodeURIComponent(code)}/deconstruct`);
+          }
+        }
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          container.innerHTML = `<div style="color: var(--rose); padding: 1.5rem; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);">${escapeHtml(err.error || 'Producto no encontrado')}</div>`;
+          return;
+        }
+
+        const data = await res.json();
+        const pName = data.productName || 'Producto comercial';
+        const pBrands = data.brands || 'Sin marca';
+        const pCode = data.productCode || code;
+        const purity = Math.round(data.estimatedPurityScore !== undefined ? data.estimatedPurityScore : 80);
+        const noblePct = data.declaredNoblePercent ? data.declaredNoblePercent.toFixed(1) : null;
+        const mainBase = data.mainBase || 'Alimento noble';
+        const ingredients = data.ingredients || data.deconstructedIngredients || [];
+        const additives = data.highRiskAdditives || data.additives || [];
+
+        container.innerHTML = `
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+              <div>
+                <h2>${escapeHtml(pName)}</h2>
+                <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">Marca: <strong>${escapeHtml(pBrands)}</strong> | Código EAN: <code>${pCode}</code> | Base Principal: <strong style="color: var(--primary);">${escapeHtml(mainBase)}</strong></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="badge ${purity >= 80 ? 'badge-primary' : (purity >= 50 ? 'badge-amber' : 'badge-orphan')}" style="font-size: 0.95rem; padding: 0.4rem 0.85rem;">
+                  Pureza: ${purity}/100
+                </span>
+                ${noblePct ? `<span class="badge badge-primary" style="font-size: 0.85rem;">${noblePct}% Noble Declarado</span>` : ''}
+              </div>
+            </div>
+
+            <!-- Termómetro de Pureza -->
+            <div class="purity-thermometer">
+              <div style="display: flex; justify-content: space-between; font-size: 0.82rem;">
+                <span>🔬 Termómetro de Pureza Noble</span>
+                <strong>${purity}%</strong>
+              </div>
+              <div class="thermometer-bar">
+                <div class="thermometer-fill" style="width: ${purity}%; background: linear-gradient(90deg, #f43f5e, #f59e0b 50%, #10b981 100%);"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                <span>0% Ultraprocesado con aditivos y azúcares añadidos</span>
+                <span>100% Alimento primario noble íntegro</span>
+              </div>
+            </div>
+
+            <!-- Desglose de Ingredientes según Reglamento UE 1169/2011 -->
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.1rem;">⚖️ Lista de Ingredientes en Orden Ponderal Decreciente:</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Pos.</th>
+                  <th>Ingrediente legal declarado</th>
+                  <th>% QUID</th>
+                  <th>Alimento Primario BEDCA</th>
+                  <th>Tipo</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ingredients.map(ing => `
+                  <tr>
+                    <td><strong>#${ing.position}</strong></td>
+                    <td>${escapeHtml(ing.rawText)}</td>
+                    <td>${ing.percentage !== null && ing.percentage !== undefined ? `<strong style="color: var(--primary);">${ing.percentage}%</strong>` : '<span style="color: var(--text-muted);">-</span>'}</td>
+                    <td>${ing.primaryFoodId ? `<code style="color: var(--primary-light);">${ing.primaryFoodId}</code>` : '<span style="color: var(--text-muted);">Sin match directo</span>'}</td>
+                    <td>${ing.isAdditive ? '<span class="badge badge-orphan">🧪 Aditivo</span>' : '<span class="badge badge-primary">Ingrediente Noble</span>'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <!-- Aditivos detectados -->
+            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.25); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem;">🧪 Evaluación de Aditivos Tecnológicos (${additives.length} detectados):</h4>
+              ${additives.length === 0 ? '<p style="color: var(--primary); font-size: 0.85rem;">✓ No se detectaron aditivos de riesgo en el etiquetado. Producto limpio.</p>' : `
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  ${additives.map(a => `<span class="badge badge-orphan">${escapeHtml(typeof a === 'string' ? a : (a.code + ': ' + (a.name || 'Aditivo')))}</span>`).join('')}
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--rose);">Error: ${err.message}</div>`;
+      }
+    }
+
+    // --- TAB 4: DESPENSA ➔ RECETA ---
+    async function loadPantry() {
+      try {
+        const res = await fetch('/api/pantry');
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = data.items || [];
+        const tbody = document.getElementById('pantry-tbody');
+        tbody.innerHTML = items.map(i => `
           <tr>
-            <td><strong style="color: #fca5a5;">${escapeHtml(item.ing)}</strong></td>
-            <td>${escapeHtml(item.recipe)}</td>
-            <td><span class="tag" style="background: var(--amber-dim); color: var(--amber); font-weight: 500;">${item.missingCount === 1 ? '🟡 Falta solo este' : '🔴 Incompleta'}</span></td>
+            <td><strong>${escapeHtml(i.productName)}</strong></td>
+            <td><code>${escapeHtml(i.canonicalPrimaryId || '-')}</code></td>
+            <td>${i.amount} ${escapeHtml(i.unit)}</td>
+            <td><span class="tag">${escapeHtml(i.category || 'despensa')}</span></td>
           </tr>
         `).join('');
+      } catch (err) {
+        console.error("Error cargando despensa:", err);
       }
-
-      document.getElementById('shopping-modal').classList.add('open');
     }
 
-    function closeShoppingModal() {
-      document.getElementById('shopping-modal').classList.remove('open');
+    async function loadMatchingRecipes() {
+      try {
+        const res = await fetch('/api/recipes/matching');
+        if (!res.ok) return;
+        const data = await res.json();
+        allMatches = data.matches || [];
+        document.getElementById('count-ready').innerText = data.readyToCookCount || 0;
+        document.getElementById('count-pantry-all').innerText = data.totalMatches || 0;
+        renderPantryMatching();
+      } catch (err) {
+        console.error("Error cargando matching:", err);
+      }
     }
 
-    function copyFullShoppingList() {
-      const missingList = [];
-      allMatches.forEach(m => {
-        if (m.missingCount === 1 && m.missingIngredients) {
-          m.missingIngredients.forEach(ing => {
-            missingList.push(`• ${ing} (para ${m.recipe.name})`);
-          });
-        }
+    function renderPantryMatching() {
+      const grid = document.getElementById('pantry-recipe-grid');
+      const filtered = allMatches.filter(m => {
+        if (currentPantryFilter === 'ready') return m.isReadyToCook;
+        if (currentPantryFilter === 'missing1') return m.missingCount === 1;
+        return true;
       });
-      if (missingList.length === 0) {
-        allMatches.forEach(m => {
-          if (m.missingIngredients) {
-            m.missingIngredients.forEach(ing => {
-              missingList.push(`• ${ing} (para ${m.recipe.name})`);
-            });
-          }
-        });
-      }
 
-      if (missingList.length === 0) {
-        showToast('No hay ingredientes faltantes que copiar');
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">No hay recetas que coincidan con el filtro actual.</div>';
         return;
       }
 
-      const text = `🛒 Lista de la Compra (PrimaryFoods):\n` + missingList.join('\n');
-      navigator.clipboard.writeText(text).then(() => {
-        showToast(`📋 Lista de la compra copiada (${missingList.length} ingredientes)`);
-      }).catch(() => {
-        showToast('Error al copiar al portapapeles');
+      grid.innerHTML = filtered.map(m => {
+        const r = m.recipe;
+        const isReady = m.isReadyToCook;
+        return `
+          <div class="recipe-card" style="overflow: hidden;">
+            ${r.image ? `
+              <div style="height: 120px; margin: -1.25rem -1.25rem 0.75rem -1.25rem; overflow: hidden; background: #0f172a; position: relative;">
+                <img src="${r.image}" alt="${escapeHtml(r.name)}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
+              </div>
+            ` : ''}
+            <div>
+              <div class="card-header">
+                <h3 class="card-title">${escapeHtml(r.name)}</h3>
+                <span class="badge ${isReady ? 'badge-primary' : (m.missingCount === 1 ? 'badge-amber' : 'badge-orphan')}">
+                  ${isReady ? '🟢 Lista para cocinar' : `🟡 Falta ${m.missingCount}`}
+                </span>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                ${m.availableCount} de ${m.totalIngredients} ingredientes en despensa (${Math.round(m.matchPercentage)}%)
+              </div>
+              <div style="font-size: 0.8rem; margin-bottom: 0.75rem;">
+                ${m.missingIngredients && m.missingIngredients.length > 0 ? `
+                  <div style="color: #fca5a5; margin-bottom: 0.35rem;">Faltan: ${m.missingIngredients.map(i => `<strong>${escapeHtml(i)}</strong>`).join(', ')}</div>
+                ` : '<div style="color: var(--primary);">¡Tienes todos los ingredientes! 🎉</div>'}
+              </div>
+            </div>
+            <div class="card-footer">
+              <span class="tag">#${escapeHtml(r.tags ? r.tags[0] : 'mediterránea')}</span>
+              ${!isReady && m.missingCount > 0 ? `
+                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;" onclick="copyMissingIngredients('${escapeHtml(r.name)}', ${JSON.stringify(m.missingIngredients).replace(/"/g, '&quot;')})">
+                  📋 Copiar faltantes
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setPantryFilter(filter, btn) {
+      currentPantryFilter = filter;
+      document.querySelectorAll('#tab-pantry-matching .filter-chip').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderPantryMatching();
+    }
+
+    // --- TAB 5: EXPORTADOR BUSCATURECETA ---
+    async function loadExportPreview() {
+      try {
+        const res = await fetch('/api/export/buscatureceta');
+        if (!res.ok) return;
+        cachedExportJSON = await res.json();
+        document.getElementById('export-preview-box').innerText = JSON.stringify(cachedExportJSON, null, 2);
+      } catch (err) {
+        document.getElementById('export-preview-box').innerText = "Error cargando vista previa de exportación.";
+      }
+    }
+
+    function copyExportJSON() {
+      if (!cachedExportJSON) return;
+      navigator.clipboard.writeText(JSON.stringify(cachedExportJSON, null, 2)).then(() => {
+        showToast('📋 JSON de exportación copiado al portapapeles');
+      });
+    }
+
+    // --- MAPEO MANUAL ---
+    function openMappingModal(rawTerm) {
+      document.getElementById('map-raw-term').value = rawTerm;
+      document.getElementById('map-primary-id').value = '';
+      document.getElementById('mapping-modal').classList.add('open');
+    }
+
+    function closeMappingModal() {
+      document.getElementById('mapping-modal').classList.remove('open');
+    }
+
+    async function saveManualMapping() {
+      const rawTerm = document.getElementById('map-raw-term').value.trim();
+      const primaryID = document.getElementById('map-primary-id').value.trim();
+      if (!rawTerm || !primaryID) {
+        showToast('Rellena el alimento primario canónico');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/mappings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rawTerm: rawTerm,
+            canonicalPrimaryId: primaryID,
+            confidence: 1.0,
+            source: 'manual'
+          })
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          showToast(`💾 Mapeo guardado: "${rawTerm}" ➔ "${primaryID}"`);
+          closeMappingModal();
+          await loadAnalyzedRecipes();
+        } else {
+          showToast('❌ Error guardando mapeo: ' + (data.error || 'Error'));
+        }
+      } catch (err) {
+        showToast('❌ Error de red: ' + err.message);
+      }
+    }
+
+    // --- TAB: SINCRONIZADOR MEALIE ---
+    let allMealieDiff = [];
+    let currentMealieFilter = 'all';
+
+    async function loadMealieConfig() {
+      try {
+        const res = await fetch('/api/config');
+        if (!res.ok) return;
+        const cfg = await res.json();
+        const urlInput = document.getElementById('mealie-cfg-url');
+        const tokenInput = document.getElementById('mealie-cfg-token');
+        const pathLabel = document.getElementById('mealie-config-path-label');
+        if (urlInput) urlInput.value = cfg.mealieUrl || '';
+        if (tokenInput) tokenInput.value = cfg.mealieToken || '';
+        if (pathLabel && cfg.configPath) pathLabel.innerText = cfg.configPath;
+      } catch (err) {
+        console.error("Error cargando config de Mealie:", err);
+      }
+    }
+
+    function toggleTokenVisibility(btn) {
+      const input = document.getElementById('mealie-cfg-token');
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerText = '🔒';
+      } else {
+        input.type = 'password';
+        btn.innerText = '👁️';
+      }
+    }
+
+    async function saveMealieConfig() {
+      const url = (document.getElementById('mealie-cfg-url')?.value || '').trim();
+      const token = (document.getElementById('mealie-cfg-token')?.value || '').trim();
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mealieUrl: url, mealieToken: token })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'ok') {
+          showToast('✓ Configuración y credenciales de Mealie guardadas en config.json');
+          await loadMealieDiff(true);
+        } else {
+          showToast('❌ Error guardando configuración: ' + (data.error || 'Error'));
+        }
+      } catch (err) {
+        showToast('❌ Error de red: ' + err.message);
+      }
+    }
+
+    async function loadMealieDiff(userFeedback = false) {
+      const btn = document.getElementById('btn-refresh-diff');
+      if (btn && userFeedback) {
+        btn.innerText = '⏳ Refrescando...';
+        btn.disabled = true;
+      }
+
+      try {
+        const res = await fetch('/api/mealie/diff');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        allMealieDiff = data.items || [];
+
+        // Conexión
+        const badge = document.getElementById('mealie-conn-badge');
+        if (badge) {
+          if (data.connected) {
+            badge.className = 'badge badge-primary';
+            badge.innerText = `🟢 Conectado (${data.totalMealie} recetas)`;
+          } else {
+            badge.className = 'badge badge-orphan';
+            badge.innerText = '🔴 Desconectado';
+          }
+        }
+
+        // Stats
+        document.getElementById('stat-mealie-total').innerText = data.totalMealie || 0;
+        document.getElementById('stat-primary-total').innerText = data.totalPrimary || 0;
+        document.getElementById('stat-mealie-new').innerHTML = `${data.newInMealieCount || 0} ${data.newInMealieCount > 0 ? '<span style="font-size: 0.85rem; color: #c084fc;">(¡Importar!)</span>' : ''}`;
+        document.getElementById('stat-primary-only').innerText = data.onlyInPrimaryCount || 0;
+        document.getElementById('stat-sync-both').innerText = data.inBothCount || 0;
+
+        // Conteos en chips
+        document.getElementById('diff-count-all').innerText = allMealieDiff.length;
+        document.getElementById('diff-count-new').innerText = data.newInMealieCount || 0;
+        document.getElementById('diff-count-primary').innerText = data.onlyInPrimaryCount || 0;
+        document.getElementById('diff-count-both').innerText = data.inBothCount || 0;
+
+        // Botón importar todo
+        const btnAllNew = document.getElementById('btn-import-all-new');
+        if (btnAllNew) {
+          btnAllNew.innerText = `📥 Importar Todo lo Nuevo de Mealie (${data.newInMealieCount || 0})`;
+          btnAllNew.disabled = (data.newInMealieCount || 0) === 0;
+        }
+
+        renderMealieDiff();
+        if (userFeedback) showToast('✓ Comparativa Mealie actualizada con éxito');
+      } catch (err) {
+        console.error("Error cargando diff de Mealie:", err);
+        const badge = document.getElementById('mealie-conn-badge');
+        if (badge) {
+          badge.className = 'badge badge-orphan';
+          badge.innerText = '🔴 Error conexión';
+        }
+        if (userFeedback) showToast('❌ Error consultando Mealie: ' + err.message);
+      } finally {
+        if (btn && userFeedback) {
+          btn.innerText = '🔄 Refrescar Comparativa';
+          btn.disabled = false;
+        }
+      }
+    }
+
+    function setMealieDiffFilter(filter, el) {
+      currentMealieFilter = filter;
+      document.querySelectorAll('#tab-mealie-sync .filter-chip').forEach(c => c.classList.remove('active'));
+      if (el) el.classList.add('active');
+      renderMealieDiff();
+    }
+
+    function filterMealieDiff() {
+      renderMealieDiff();
+    }
+
+    function renderMealieDiff() {
+      const grid = document.getElementById('mealie-diff-grid');
+      if (!grid) return;
+
+      const q = (document.getElementById('mealie-diff-search-input')?.value || '').toLowerCase().trim();
+
+      const filtered = allMealieDiff.filter(item => {
+        if (currentMealieFilter !== 'all' && item.status !== currentMealieFilter) {
+          return false;
+        }
+        if (q) {
+          const matchName = item.name.toLowerCase().includes(q);
+          const matchSlug = item.slug.toLowerCase().includes(q);
+          const matchTags = (item.tags || []).some(t => t.toLowerCase().includes(q));
+          if (!matchName && !matchSlug && !matchTags) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">No hay recetas que coincidan con el filtro seleccionado.</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => {
+        let badgeHtml = '';
+        let actionBtnHtml = '';
+
+        if (item.status === 'new_in_mealie') {
+          badgeHtml = '<span class="badge badge-purple" style="font-size: 0.72rem;">✨ Nueva en Mealie</span>';
+          actionBtnHtml = `
+            <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" onclick="importSingleFromMealie('${escapeHtml(item.slug)}', this)">
+              📥 Importar a PrimaryFoods
+            </button>
+          `;
+        } else if (item.status === 'only_in_primary') {
+          badgeHtml = '<span class="badge badge-commercial" style="font-size: 0.72rem;">📁 Solo en PrimaryFoods</span>';
+          actionBtnHtml = `
+            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" onclick="exportSingleRecipeToMealie('${escapeHtml(item.slug)}', this)">
+              📤 Subir a Mealie
+            </button>
+          `;
+        } else {
+          badgeHtml = '<span class="badge badge-primary" style="font-size: 0.72rem;">✅ En Sintonía</span>';
+          actionBtnHtml = `
+            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" onclick="exportSingleRecipeToMealie('${escapeHtml(item.slug)}', this)" title="Re-enviar actualización">
+              🔄 Actualizar Mealie
+            </button>
+          `;
+        }
+
+        const mealieLink = item.mealieUrl ? `
+          <a class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.55rem;" href="${item.mealieUrl}" target="_blank" title="Abrir en Mealie">
+            🔗 Ver en Mealie
+          </a>
+        ` : '';
+
+        return `
+          <div class="recipe-card" style="border-left: 3px solid ${item.status === 'new_in_mealie' ? '#c084fc' : (item.status === 'in_both' ? 'var(--primary)' : 'var(--indigo)')};">
+            <div>
+              <div class="card-header">
+                <h3 class="card-title">${escapeHtml(item.name)}</h3>
+                ${badgeHtml}
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.4rem 0 0.8rem; line-height: 1.4;">
+                ${item.description ? escapeHtml(item.description) : '<em>Sin descripción registrada</em>'}
+              </p>
+              <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <span>🥗 <strong>${item.ingredientsCount}</strong> ingredientes</span>
+                <span>📋 <strong>${item.instructionsCount}</strong> pasos</span>
+                ${item.yield ? `<span>👥 <strong>${item.yield}</strong> raciones</span>` : ''}
+              </div>
+            </div>
+
+            <div class="card-footer" style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div class="tags-container">
+                ${(item.tags || []).slice(0, 3).map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+              </div>
+              <div style="display: flex; gap: 0.35rem; align-items: center;">
+                ${mealieLink}
+                ${actionBtnHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function importSingleFromMealie(slug, btn) {
+      if (!slug) return;
+      const originalText = btn ? btn.innerText : '';
+      if (btn) {
+        btn.innerText = '⏳ Importando...';
+        btn.disabled = true;
+      }
+      try {
+        const res = await fetch(`/api/mealie/import?slug=${encodeURIComponent(slug)}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'ok' && data.totalImported > 0) {
+          const item = data.imported[0];
+          showToast(`✓ Receta "${item.name}" importada y analizada con éxito (${Math.round(item.matchPercentage)}% cobertura)`);
+          await loadMealieDiff();
+          await loadAnalyzedRecipes();
+        } else {
+          const errMsg = data.failed && data.failed.length > 0 ? data.failed[0].error : (data.error || 'Error desconocido');
+          showToast(`❌ Error importando: ${errMsg}`);
+          if (btn) btn.innerText = originalText;
+        }
+      } catch (err) {
+        showToast('❌ Error de red al importar de Mealie: ' + err.message);
+        if (btn) btn.innerText = originalText;
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function importAllNewFromMealie() {
+      const btn = document.getElementById('btn-import-all-new');
+      if (btn) {
+        btn.innerText = '⏳ Importando recetas nuevas...';
+        btn.disabled = true;
+      }
+      try {
+        const res = await fetch('/api/mealie/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ allNew: true })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'ok') {
+          showToast(`✓ Se han importado ${data.totalImported} recetas nuevas desde Mealie y analizado con éxito`);
+          await loadMealieDiff();
+          await loadAnalyzedRecipes();
+        } else {
+          showToast('❌ Error importando lote: ' + (data.error || 'Error'));
+        }
+      } catch (err) {
+        showToast('❌ Error al importar lote de Mealie: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    // --- MODALES GENERALES & TOAST ---
+    function openPantryModal() { document.getElementById('pantry-modal').classList.add('open'); }
+    function closePantryModal() { document.getElementById('pantry-modal').classList.remove('open'); }
+    function openShoppingModal() { document.getElementById('shopping-modal').classList.add('open'); }
+    function closeShoppingModal() { document.getElementById('shopping-modal').classList.remove('open'); }
+
+    function copyMissingIngredients(name, list) {
+      const text = `🛒 Faltantes para "${name}":\n` + list.map(i => `• ${i}`).join('\n');
+      navigator.clipboard.writeText(text).then(() => showToast(`📋 Faltantes de "${name}" copiados`));
+    }
+
+    function copyFullShoppingList() {
+      const list = [];
+      allMatches.forEach(m => {
+        if (m.missingIngredients) {
+          m.missingIngredients.forEach(i => list.push(`• ${i} (para ${m.recipe.name})`));
+        }
+      });
+      navigator.clipboard.writeText(`🛒 Lista de Compra PrimaryFoods:\n` + list.join('\n')).then(() => {
+        showToast(`📋 ${list.length} faltantes copiados`);
       });
     }
 
     function downloadBuscaturecetaPack() {
-      const selectedRecipes = allMatches.filter(m => m.isReadyToCook || m.missingCount <= 1).map(m => m.recipe);
-      const shoppingList = [];
-      allMatches.forEach(m => {
-        if (m.missingCount <= 1 && m.missingIngredients) {
-          m.missingIngredients.forEach(ing => {
-            shoppingList.push({
-              productName: ing,
-              amount: 1,
-              unit: 'unidad',
-              recipeSource: m.recipe.name
-            });
-          });
-        }
-      });
-
-      // Sugerencia de plan de comidas para la agenda
-      const diaryPlan = selectedRecipes.slice(0, 4).map((r, idx) => ({
-        date: new Date(Date.now() + idx * 86400000).toISOString().split('T')[0],
-        mealType: idx % 2 === 0 ? 'lunch' : 'dinner',
-        recipeSlug: r.slug,
-        recipeName: r.name,
-        course: 'main',
-        status: 'planned'
-      }));
-
-      const pack = {
-        schemaVersion: '1.0',
-        app: 'primaryfoods',
-        exportedAt: new Date().toISOString(),
-        recipes: selectedRecipes,
-        shoppingList: shoppingList,
-        diaryPlan: diaryPlan
-      };
-
-      const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `buscatureceta_menu_pack_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('📦 Paquete para Buscatureceta descargado con éxito');
+      window.location.href = '/api/export/buscatureceta?download=true';
     }
 
     function showToast(msg) {

@@ -19,6 +19,7 @@ type Recipe struct {
 	Instructions []string           `json:"instructions"`
 	Tags         []string           `json:"tags"`
 	TotalTime    string             `json:"totalTime,omitempty"`
+	Image        string             `json:"image,omitempty"`
 	Source       string             `json:"source"` // "mealie", "internal", "generated"
 }
 

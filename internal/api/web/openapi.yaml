@@ -1,0 +1,1259 @@
+openapi: 3.1.0
+info:
+  title: PrimaryFoods API
+  description: |
+    **PrimaryFoods** es el motor analítico, planificador nutricional y puente entre:
+    - **Alimentos Primarios Nobles**: Catálogo BEDCA con micronutrientes, polifenoles y bondades.
+    - **Recetario Inteligente**: Ingestión de recetas desde Mealie y extracciones OCR de PDFs (Schema.org).
+    - **OpenFoodFacts España**: Base de datos de productos comerciales con deconstrucción normativa de ingredientes (Reglamento UE 1169/2011), porcentajes QUID, pureza y aditivos.
+    - **Gestión Offline de Despensa y Diario**: Conexión bidireccional con Buscatureceta y NutriAgenda.
+  version: 2.1.0
+  contact:
+    name: Jose Juan Montiel
+    url: https://github.com/josejuanmontiel/PrimaryFoods
+
+servers:
+  - url: http://localhost:8086
+    description: Servidor Local de Desarrollo
+
+paths:
+  /api/health:
+    get:
+      summary: Comprobación de estado del servicio
+      operationId: getHealth
+      tags:
+        - Sistema
+      responses:
+        '200':
+          description: Servicio saludable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/foods:
+    get:
+      summary: Listar alimentos primarios BEDCA
+      description: Devuelve el catálogo de alimentos primarios con filtrado opcional por categoría o tag
+      operationId: listFoods
+      tags:
+        - Alimentos Primarios
+      parameters:
+        - name: category
+          in: query
+          description: Categoría (vegetable, fruit, legume, fish, meat, dairy, oil, cereal, nut, spice)
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: "Etiqueta nutricional (ej: #antioxidante, #prebiotico)"
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Lista de alimentos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodListResponse'
+
+  /api/foods/search:
+    get:
+      summary: Búsqueda de alimentos primarios con Smart Match
+      operationId: searchFoods
+      tags:
+        - Alimentos Primarios
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Texto a buscar (nombre o sinónimo)
+          schema:
+            type: string
+            example: brocoli
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Resultados coincidentes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  count:
+                    type: integer
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PrimaryFood'
+
+  /api/foods/{id}:
+    get:
+      summary: Obtener alimento primario por ID canónico
+      operationId: getFoodById
+      tags:
+        - Alimentos Primarios
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: brocoli
+      responses:
+        '200':
+          description: Alimento encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrimaryFood'
+        '404':
+          description: Alimento no encontrado
+
+  /api/export/json:
+    get:
+      summary: Exportar todo el catálogo para modo offline en Buscatureceta
+      operationId: exportAllFoods
+      tags:
+        - Alimentos Primarios
+      responses:
+        '200':
+          description: Array completo de alimentos primarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrimaryFood'
+
+  /api/recipes/matching:
+    get:
+      summary: Evaluar recetas indexadas contra la despensa actual
+      operationId: getRecipesMatching
+      tags:
+        - Motor Recetas
+      parameters:
+        - name: ready_only
+          in: query
+          description: Si es true, solo devuelve recetas 100% listas para cocinar
+          schema:
+            type: boolean
+            default: false
+        - name: max_missing
+          in: query
+          description: Máximo de ingredientes faltantes permitidos (-1 para sin límite)
+          schema:
+            type: integer
+            default: -1
+      responses:
+        '200':
+          description: Lista de recetas evaluadas con porcentaje de cobertura
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchingResponse'
+
+  /api/recipes/import-json:
+    post:
+      summary: Ingestar recetas desde JSON (Schema.org / Qwen-VL OCR)
+      description: Permite subir o sincronizar recetas extraídas de libros en PDF o de páginas web
+      operationId: importRecipesJSON
+      tags:
+        - Motor Recetas
+      parameters:
+        - name: file
+          in: query
+          description: Ruta local a un archivo JSON en el servidor (opcional)
+          schema:
+            type: string
+      requestBody:
+        description: Array de recetas en formato JSON
+        required: false
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/RawRecipeInput'
+      responses:
+        '200':
+          description: Recetas importadas con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  imported:
+                    type: integer
+                    example: 15
+
+  /api/recipes/analyze:
+    get:
+      summary: Análisis profundo y deconstrucción de recetas en el supermercado
+      description: Deconstruye cada ingrediente de la receta en su Alimento Primario noble y busca las mejores alternativas comerciales en España clasificadas por NutriScore y pureza
+      operationId: analyzeRecipes
+      tags:
+        - Motor Recetas
+      parameters:
+        - name: slug
+          in: query
+          description: Slug de la receta a analizar (si se omite, analiza todas)
+          schema:
+            type: string
+            example: minestrone-blanca
+      responses:
+        '200':
+          description: Desglose analítico de ingredientes y alternativas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeAnalysisResponse'
+
+  /api/products/search:
+    get:
+      summary: Buscar productos comerciales de OpenFoodFacts
+      description: Búsqueda con ranking por calidad nutricional (Nutriscore A/B y Nova 1/2 primero)
+      operationId: searchCommercialProducts
+      tags:
+        - Productos Comerciales
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Nombre o marca del producto
+          schema:
+            type: string
+            example: macarrones
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Lista de productos encontrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query:
+                    type: string
+                  total:
+                    type: integer
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommercialProduct'
+
+  /api/products/by-base:
+    get:
+      summary: Buscador Inverso por Alimento Primario Base
+      description: Encuentra qué productos del supermercado contienen como base (Top 1 a Top 3) un alimento primario concreto
+      operationId: getProductsByBase
+      tags:
+        - Productos Comerciales
+      parameters:
+        - name: primary
+          in: query
+          required: true
+          description: "ID o término del alimento primario (ej: garbanzo, tomate, cacao)"
+          schema:
+            type: string
+            example: garbanzo
+        - name: main
+          in: query
+          description: Si es true, solo devuelve productos donde sea el ingrediente nº 1 (por peso)
+          schema:
+            type: boolean
+            default: false
+        - name: min_purity
+          in: query
+          description: Puntuación mínima de pureza (0 a 100)
+          schema:
+            type: number
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Productos con dicha base primaria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  primary:
+                    type: string
+                  source:
+                    type: string
+                  total:
+                    type: integer
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductWithBase'
+
+  /api/products/{code}/deconstruct:
+    get:
+      summary: Deconstrucción normativa de un producto (Reglamento UE 1169/2011)
+      description: Analiza la lista legal de ingredientes de un código de barras EAN, extrayendo porcentajes QUID, aditivos E-xxx, azúcares añadidos y métrica de pureza
+      operationId: deconstructProduct
+      tags:
+        - Productos Comerciales
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Código de barras EAN
+          schema:
+            type: string
+            example: "00012480"
+      responses:
+        '200':
+          description: Deconstrucción legal completa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelDeconstruction'
+
+  /api/sync/buscatureceta:
+    post:
+      summary: Sincronizar despensa e historial desde Buscatureceta
+      operationId: syncBuscatureceta
+      tags:
+        - Integración Buscatureceta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pantry:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PantryItem'
+                diary:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Sincronización exitosa
+
+  /api/mappings:
+    post:
+      summary: Guardar asociación persistente de ingrediente (Memoria del Matching)
+      description: Permite al usuario o a la IA curar un ingrediente nuevo para que se resuelva en 0ms en futuras recetas
+      operationId: saveMapping
+      tags:
+        - Aprendizaje y Curación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngredientMapping'
+      responses:
+        '200':
+          description: Mapeo guardado con éxito
+
+  /api/export/buscatureceta:
+    get:
+      summary: Exportar recetas enriquecidas y catálogo para Buscatureceta
+      description: |
+        Genera un paquete optimizado para Buscatureceta donde cada ingrediente de las recetas
+        está enriquecido con el ID canónico de su alimento primario BEDCA (para cálculo de micronutrientes)
+        y alternativas de productos comerciales de supermercados españoles (OpenFoodFacts) con EAN,
+        marcas, Nutriscore y pureza estimada para la lista de la compra.
+      operationId: exportBuscatureceta
+      tags:
+        - Integración Buscatureceta
+      parameters:
+        - name: format
+          in: query
+          description: Formato de exportación ('pack' para paquete completo o 'recipes_only' para array directo de recetas)
+          schema:
+            type: string
+            enum: [pack, recipes_only]
+            default: pack
+        - name: download
+          in: query
+          description: Si es true, añade cabecera Content-Disposition para forzar descarga como archivo .json
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Paquete enriquecido para Buscatureceta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuscaturecetaEnrichedExport'
+
+  /api/products/import-off:
+    post:
+      summary: Ingestar productos comerciales desde OpenFoodFacts España (.tsv.zz)
+      operationId: importOFFProducts
+      tags:
+        - Productos Comerciales
+      parameters:
+        - name: file
+          in: query
+          description: Ruta opcional al archivo spain_products.tsv.zz
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Límite de productos a importar (por defecto 50000)
+          schema:
+            type: integer
+            default: 50000
+      responses:
+        '200':
+          description: Resultado de la importación
+
+  /api/pantry:
+    get:
+      summary: Obtener inventario actual de despensa
+      operationId: getPantry
+      tags:
+        - Integración Buscatureceta
+      responses:
+        '200':
+          description: Lista de items en despensa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PantryItem'
+
+  /api/pantry/item:
+    post:
+      summary: Añadir o actualizar un item en la despensa
+      operationId: addPantryItem
+      tags:
+        - Integración Buscatureceta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PantryItem'
+      responses:
+        '200':
+          description: Item actualizado
+    delete:
+      summary: Eliminar un item de la despensa
+      operationId: deletePantryItem
+      tags:
+        - Integración Buscatureceta
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item eliminado
+
+  /api/config:
+    get:
+      summary: Obtener configuración del servicio y credenciales Mealie
+      operationId: getConfig
+      tags:
+        - Configuración
+      responses:
+        '200':
+          description: Configuración actual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mealieUrl:
+                    type: string
+                    example: http://localhost:9925
+                  mealieToken:
+                    type: string
+                  port:
+                    type: string
+                    example: "8086"
+                  dbPath:
+                    type: string
+                    example: data/primaryfoods.db
+                  configPath:
+                    type: string
+                    example: config.json
+    post:
+      summary: Actualizar configuración y credenciales en caliente
+      operationId: updateConfig
+      tags:
+        - Configuración
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mealieUrl:
+                  type: string
+                  example: http://localhost:9925
+                mealieToken:
+                  type: string
+      responses:
+        '200':
+          description: Configuración actualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  config:
+                    type: object
+
+  /api/mealie/status:
+    get:
+      summary: Comprobar conectividad con instancia de Mealie
+      operationId: getMealieStatus
+      tags:
+        - Integración Mealie
+      responses:
+        '200':
+          description: Estado de conexión y conteo de recetas
+
+  /api/mealie/diff:
+    get:
+      summary: Comparativa y detección de diferencias de recetas entre Mealie y PrimaryFoods
+      description: |
+        Compara el recetario almacenado en SQLite contra la instancia de Mealie.
+        Detecta recetas nuevas procedentes de redes sociales (TikTok/Instagram) en Mealie que aún no han sido importadas en PrimaryFoods,
+        recetas presentes en ambas, y recetas existentes únicamente en PrimaryFoods.
+      operationId: getMealieDiff
+      tags:
+        - Integración Mealie
+      responses:
+        '200':
+          description: Reporte de diferencias entre Mealie y PrimaryFoods
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalMealie:
+                    type: integer
+                  totalPrimary:
+                    type: integer
+                  newInMealieCount:
+                    type: integer
+                  inBothCount:
+                    type: integer
+                  onlyInPrimaryCount:
+                    type: integer
+                  mealieBaseUrl:
+                    type: string
+                  connected:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        slug:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        yield:
+                          type: integer
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                        ingredientsCount:
+                          type: integer
+                        instructionsCount:
+                          type: integer
+                        status:
+                          type: string
+                          enum: [new_in_mealie, in_both, only_in_primary]
+                        inMealie:
+                          type: boolean
+                        inPrimary:
+                          type: boolean
+                        mealieUrl:
+                          type: string
+
+  /api/mealie/import:
+    post:
+      summary: Importar recetas desde Mealie hacia PrimaryFoods con análisis BEDCA/OFF
+      description: |
+        Trae recetas desde Mealie hacia el almacenamiento SQLite de PrimaryFoods.
+        Soporta importación de una receta por query param (?slug=...), una lista de slugs en JSON, o todas las recetas nuevas ({allNew: true}).
+        Las recetas importadas son analizadas automáticamente para resolver ingredientes primarios y comerciales.
+      operationId: importFromMealie
+      tags:
+        - Integración Mealie
+      parameters:
+        - name: slug
+          in: query
+          required: false
+          description: Slug de la receta en Mealie a importar
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                slugs:
+                  type: array
+                  items:
+                    type: string
+                allNew:
+                  type: boolean
+      responses:
+        '200':
+          description: Resultado de la importación
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  totalTarget:
+                    type: integer
+                  totalImported:
+                    type: integer
+                  totalFailed:
+                    type: integer
+                  imported:
+                    type: array
+                    items:
+                      type: object
+                  failed:
+                    type: array
+                    items:
+                      type: object
+
+  /api/mealie/sync:
+    post:
+      summary: Sincronizar catálogo de recetas desde Mealie hacia SQLite
+      operationId: syncMealie
+      tags:
+        - Integración Mealie
+      responses:
+        '200':
+          description: Recetas sincronizadas con éxito
+
+  /api/mealie/export:
+    post:
+      summary: Exportar y publicar recetas desde PrimaryFoods hacia Mealie
+      description: |
+        Crea o actualiza recetas en la instancia conectada de Mealie mediante su API REST oficial (POST /api/recipes + PATCH /api/recipes/{slug}).
+        Permite exportar una receta específica por query param (?slug=...), recetas enviadas en el cuerpo JSON, o exportar por lote todo el recetario almacenado.
+      operationId: exportToMealie
+      tags:
+        - Integración Mealie
+      parameters:
+        - name: slug
+          in: query
+          required: false
+          description: Slug o ID de la receta específica a exportar a Mealie
+          schema:
+            type: string
+            example: uramaki-o-rollito-invertido
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                slug:
+                  type: string
+                recipe:
+                  $ref: '#/components/schemas/Recipe'
+                recipes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Recipe'
+      responses:
+        '200':
+          description: Resultado de la exportación a Mealie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  totalTarget:
+                    type: integer
+                    example: 1
+                  totalExported:
+                    type: integer
+                    example: 1
+                  totalFailed:
+                    type: integer
+                    example: 0
+                  mealieBaseUrl:
+                    type: string
+                    example: http://localhost:9925
+                  exported:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        url:
+                          type: string
+                  failed:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        error:
+                          type: string
+
+  /api/openapi.yaml:
+    get:
+      summary: Especificación OpenAPI 3.1.0 en formato YAML
+      operationId: getOpenAPIYAML
+      tags:
+        - Sistema
+      responses:
+        '200':
+          description: Documento OpenAPI YAML
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /api/openapi.json:
+    get:
+      summary: Especificación OpenAPI 3.1.0 en formato JSON
+      operationId: getOpenAPIJSON
+      tags:
+        - Sistema
+      responses:
+        '200':
+          description: Documento OpenAPI JSON
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /docs:
+    get:
+      summary: Documentación interactiva de la API (Scalar / OpenAPI)
+      operationId: getAPIDocs
+      tags:
+        - Sistema
+      responses:
+        '200':
+          description: Interfaz web de documentación interactiva
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  schemas:
+    PrimaryFood:
+      type: object
+      properties:
+        id:
+          type: string
+          example: brocoli
+        name:
+          type: string
+          example: Brócoli
+        scientificName:
+          type: string
+          example: Brassica oleracea var. italica
+        category:
+          type: string
+          example: vegetable
+        aliases:
+          type: array
+          items:
+            type: string
+        nutritionPer100g:
+          $ref: '#/components/schemas/Nutrition'
+        bioactiveCompounds:
+          type: array
+          items:
+            type: string
+          example: ["Sulforafano", "Indol-3-carbinol"]
+        benefits:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["#antioxidante", "#detox"]
+
+    Nutrition:
+      type: object
+      properties:
+        calories:
+          type: number
+          example: 34
+        protein:
+          type: number
+          example: 2.8
+        fat:
+          type: number
+          example: 0.4
+        carbs:
+          type: number
+          example: 6.6
+        fiber:
+          type: number
+          example: 2.6
+        sugars:
+          type: number
+          example: 1.7
+        sodium:
+          type: number
+          example: 33
+
+    CommercialProduct:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "841000100200"
+        productName:
+          type: string
+          example: "Macarrones Pluma N.º 6"
+        brands:
+          type: string
+          example: "Gallo"
+        nutriscoreGrade:
+          type: string
+          example: "a"
+        novaGroup:
+          type: string
+          example: "1"
+        ingredientsText:
+          type: string
+          example: "Sémola de trigo duro."
+        energyKcal:
+          type: number
+          example: 350
+        protein:
+          type: number
+          example: 12.0
+        fat:
+          type: number
+          example: 1.5
+        carbs:
+          type: number
+          example: 71.0
+        fiber:
+          type: number
+          example: 3.0
+        salt:
+          type: number
+          example: 0.03
+
+    DeconstructedIngredient:
+      type: object
+      properties:
+        position:
+          type: integer
+          example: 1
+        rawText:
+          type: string
+          example: "Pasta de cacao"
+        cleanName:
+          type: string
+          example: "pasta cacao"
+        percentage:
+          type: number
+          nullable: true
+          example: 72.0
+        primaryFoodId:
+          type: string
+          example: "cacao"
+        isAdditive:
+          type: boolean
+          example: false
+        additiveCode:
+          type: string
+        additiveRisk:
+          type: string
+          example: "bajo"
+
+    LabelDeconstruction:
+      type: object
+      properties:
+        productCode:
+          type: string
+        productName:
+          type: string
+        brands:
+          type: string
+        mainBase:
+          type: string
+          example: "cacao"
+        topBases:
+          type: array
+          items:
+            type: string
+          example: ["cacao", "almendra"]
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeconstructedIngredient'
+        additivesCount:
+          type: integer
+          example: 1
+        highRiskAdditives:
+          type: array
+          items:
+            type: string
+        declaredNoblePercent:
+          type: number
+          example: 97.0
+        hasAddedSugars:
+          type: boolean
+          example: false
+        hasRefinedOils:
+          type: boolean
+          example: false
+        estimatedPurityScore:
+          type: number
+          example: 95.0
+
+    IngredientResolution:
+      type: object
+      properties:
+        originalText:
+          type: string
+          example: "Coliflor"
+        normalizedName:
+          type: string
+          example: "coliflor"
+        amount:
+          type: number
+          example: 400
+        unit:
+          type: string
+          example: "g"
+        primaryFood:
+          $ref: '#/components/schemas/PrimaryFood'
+        commercialAlternatives:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommercialProduct'
+        status:
+          type: string
+          example: "primary_match"
+
+    RecipeAnalysis:
+      type: object
+      properties:
+        recipe:
+          type: object
+        resolutions:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngredientResolution'
+        totalIngredients:
+          type: integer
+        primaryCount:
+          type: integer
+        commercialCount:
+          type: integer
+        unresolvedCount:
+          type: integer
+        matchPercentage:
+          type: number
+          example: 100.0
+
+    IngredientMapping:
+      type: object
+      properties:
+        rawTerm:
+          type: string
+          example: "jamón de parma"
+        canonicalPrimaryId:
+          type: string
+          example: "jamon_serrano"
+        commercialCodes:
+          type: array
+          items:
+            type: string
+        confidence:
+          type: number
+          example: 0.95
+        source:
+          type: string
+          example: "ai_curated"
+
+    PantryItem:
+      type: object
+      properties:
+        productCode:
+          type: string
+        productName:
+          type: string
+        amount:
+          type: number
+        unit:
+          type: string
+        pantryZone:
+          type: string
+
+    RawRecipeInput:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Macarrones con calabacín"
+        servings:
+          type: integer
+          example: 2
+        ingredients:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              amount:
+                type: number
+              unit:
+                type: string
+        instructions:
+          type: array
+          items:
+            type: string
+
+    FoodListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        count:
+          type: integer
+        foods:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrimaryFood'
+
+    MatchingResponse:
+      type: object
+      properties:
+        totalEvaluated:
+          type: integer
+        totalMatches:
+          type: integer
+        readyToCookCount:
+          type: integer
+        pantryItemsCount:
+          type: integer
+        matches:
+          type: array
+          items:
+            type: object
+
+    RecipeAnalysisResponse:
+      type: object
+      properties:
+        totalRecipes:
+          type: integer
+        totalIngredients:
+          type: integer
+        primaryMatches:
+          type: integer
+        commercialMatches:
+          type: integer
+        unresolvedCount:
+          type: integer
+        globalMatchPercentage:
+          type: number
+        analyses:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeAnalysis'
+
+    ProductWithBase:
+      type: object
+      properties:
+        product:
+          $ref: '#/components/schemas/CommercialProduct'
+        baseFoodId:
+          type: string
+        position:
+          type: integer
+        percentage:
+          type: number
+        isMainBase:
+          type: boolean
+        purityScore:
+          type: number
+
+    BuscaturecetaEnrichedExport:
+      type: object
+      properties:
+        app:
+          type: string
+          example: buscatureceta
+        version:
+          type: string
+          example: 2.1.0
+        exportedAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+          example: PrimaryFoods Database & Analyzer
+        totalRecipes:
+          type: integer
+          example: 34
+        stats:
+          type: object
+          properties:
+            primaryMatches:
+              type: integer
+            commercialMatches:
+              type: integer
+            unresolvedCount:
+              type: integer
+            globalMatchPercentage:
+              type: number
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/BuscaturecetaEnrichedRecipe'
+
+    BuscaturecetaEnrichedRecipe:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Garbanzos con Espinacas
+        category:
+          type: string
+          example: almuerzo
+        servings:
+          type: integer
+          example: 4
+        description:
+          type: string
+        instructions:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        slug:
+          type: string
+        primaryFoods:
+          type: array
+          items:
+            type: string
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/BuscaturecetaEnrichedIngredient'
+
+    BuscaturecetaEnrichedIngredient:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Garbanzos cocidos
+        amount:
+          type: number
+          example: 400
+        unit:
+          type: string
+          example: g
+        primaryFoodId:
+          type: string
+          example: bedca_123_garbanzo
+        primaryName:
+          type: string
+          example: Garbanzo seco o cocido
+        category:
+          type: string
+          example: legume
+        isCommercial:
+          type: boolean
+          example: false
+        commercialCode:
+          type: string
+        commercialName:
+          type: string
+        alternatives:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              name:
+                type: string
+              brands:
+                type: string
+              nutriscore:
+                type: string
+              purityScore:
+                type: number
+              isPrimaryBase:
+                type: boolean
+

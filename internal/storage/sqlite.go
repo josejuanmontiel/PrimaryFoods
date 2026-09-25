@@ -106,6 +106,40 @@ func (s *Storage) initSchema() error {
 			data_json TEXT NOT NULL,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);`,
+		`CREATE TABLE IF NOT EXISTS commercial_products (
+			code TEXT PRIMARY KEY,
+			product_name TEXT NOT NULL,
+			brands TEXT,
+			nutriscore_grade TEXT,
+			nova_group TEXT,
+			ingredients_text TEXT,
+			categories_tags TEXT,
+			image_url TEXT,
+			energy_kcal REAL DEFAULT 0,
+			protein REAL DEFAULT 0,
+			fat REAL DEFAULT 0,
+			carbs REAL DEFAULT 0,
+			fiber REAL DEFAULT 0,
+			salt REAL DEFAULT 0,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS ingredient_mappings (
+			raw_term TEXT PRIMARY KEY,
+			canonical_primary_id TEXT NOT NULL,
+			commercial_codes TEXT,
+			confidence REAL DEFAULT 1.0,
+			source TEXT DEFAULT 'rule',
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS product_primary_bases (
+			product_code TEXT NOT NULL,
+			primary_food_id TEXT NOT NULL,
+			position INTEGER NOT NULL,
+			percentage REAL DEFAULT 0,
+			is_main_base BOOLEAN DEFAULT FALSE,
+			purity_score REAL DEFAULT 50.0,
+			PRIMARY KEY (product_code, primary_food_id)
+		);`,
 		`CREATE INDEX IF NOT EXISTS idx_foods_category ON foods(category);`,
 		`CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name);`,
 		`CREATE INDEX IF NOT EXISTS idx_aliases_alias ON food_aliases(alias);`,
@@ -114,6 +148,11 @@ func (s *Storage) initSchema() error {
 		`CREATE INDEX IF NOT EXISTS idx_user_diary_date ON user_diary(date);`,
 		`CREATE INDEX IF NOT EXISTS idx_user_diary_history_entry ON user_diary_history(diary_entry_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_mealie_recipes_slug ON mealie_recipes(slug);`,
+		`CREATE INDEX IF NOT EXISTS idx_comm_products_name ON commercial_products(product_name);`,
+		`CREATE INDEX IF NOT EXISTS idx_comm_products_brand ON commercial_products(brands);`,
+		`CREATE INDEX IF NOT EXISTS idx_ppb_primary ON product_primary_bases(primary_food_id);`,
+		`CREATE INDEX IF NOT EXISTS idx_ppb_position ON product_primary_bases(position);`,
+		`CREATE INDEX IF NOT EXISTS idx_ppb_main ON product_primary_bases(is_main_base);`,
 	}
 
 	for _, q := range queries {
@@ -496,6 +535,9 @@ func (s *Storage) SaveRecipes(recipes []model.Recipe) error {
 	defer stmt.Close()
 
 	for _, r := range recipes {
+		if r.Slug != "" {
+			_, _ = tx.Exec("DELETE FROM mealie_recipes WHERE slug = ? AND id != ?", r.Slug, r.ID)
+		}
 		dataJSON, err := json.Marshal(r)
 		if err != nil {
 			continue
@@ -530,7 +572,341 @@ func (s *Storage) GetAllRecipes() ([]model.Recipe, error) {
 	return recipes, nil
 }
 
+// SaveCommercialProducts guarda o actualiza productos comerciales de OpenFoodFacts en lote
+func (s *Storage) SaveCommercialProducts(products []model.CommercialProduct) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`INSERT INTO commercial_products (
+		code, product_name, brands, nutriscore_grade, nova_group,
+		ingredients_text, categories_tags, image_url,
+		energy_kcal, protein, fat, carbs, fiber, salt, updated_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+	ON CONFLICT(code) DO UPDATE SET
+		product_name = excluded.product_name,
+		brands = excluded.brands,
+		nutriscore_grade = excluded.nutriscore_grade,
+		nova_group = excluded.nova_group,
+		ingredients_text = excluded.ingredients_text,
+		categories_tags = excluded.categories_tags,
+		image_url = excluded.image_url,
+		energy_kcal = excluded.energy_kcal,
+		protein = excluded.protein,
+		fat = excluded.fat,
+		carbs = excluded.carbs,
+		fiber = excluded.fiber,
+		salt = excluded.salt,
+		updated_at = CURRENT_TIMESTAMP`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, p := range products {
+		if _, err := stmt.Exec(
+			p.Code, p.ProductName, p.Brands, p.NutriscoreGrade, p.NovaGroup,
+			p.IngredientsText, p.CategoriesTags, p.ImageURL,
+			p.EnergyKcal, p.Protein, p.Fat, p.Carbs, p.Fiber, p.Salt,
+		); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// SearchCommercialProducts busca productos comerciales de OFF ordenando por calidad (NutriScore A/B y Nova 1/2 primero)
+func (s *Storage) SearchCommercialProducts(query string, limit int) ([]model.CommercialProduct, error) {
+	q := strings.TrimSpace(strings.ToLower(query))
+	if q == "" {
+		return nil, nil
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	likeQuery := "%" + q + "%"
+	sqlQuery := `
+	SELECT code, product_name, brands, nutriscore_grade, nova_group,
+	       ingredients_text, categories_tags, image_url,
+	       energy_kcal, protein, fat, carbs, fiber, salt
+	FROM commercial_products
+	WHERE product_name LIKE ? OR brands LIKE ?
+	ORDER BY
+	  CASE
+	    WHEN lower(product_name) = ? THEN 1
+	    WHEN lower(product_name) LIKE ? THEN 2
+	    ELSE 3
+	  END ASC,
+	  CASE
+	    WHEN nutriscore_grade = 'a' THEN 1
+	    WHEN nutriscore_grade = 'b' THEN 2
+	    WHEN nutriscore_grade = 'c' THEN 3
+	    WHEN nutriscore_grade = 'd' THEN 4
+	    WHEN nutriscore_grade = 'e' THEN 5
+	    ELSE 6
+	  END ASC,
+	  CASE
+	    WHEN nova_group = '1' THEN 1
+	    WHEN nova_group = '2' THEN 2
+	    WHEN nova_group = '3' THEN 3
+	    WHEN nova_group = '4' THEN 4
+	    ELSE 5
+	  END ASC
+	LIMIT ?;`
+
+	prefix := q + "%"
+	rows, err := s.db.Query(sqlQuery, likeQuery, likeQuery, q, prefix, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var products []model.CommercialProduct
+	for rows.Next() {
+		var p model.CommercialProduct
+		var brands, nutriscore, nova, ingr, cat, img sql.NullString
+		if err := rows.Scan(
+			&p.Code, &p.ProductName, &brands, &nutriscore, &nova,
+			&ingr, &cat, &img,
+			&p.EnergyKcal, &p.Protein, &p.Fat, &p.Carbs, &p.Fiber, &p.Salt,
+		); err != nil {
+			return nil, err
+		}
+		p.Brands = brands.String
+		p.NutriscoreGrade = nutriscore.String
+		p.NovaGroup = nova.String
+		p.IngredientsText = ingr.String
+		p.CategoriesTags = cat.String
+		p.ImageURL = img.String
+		products = append(products, p)
+	}
+
+	return products, nil
+}
+
+// GetCommercialProductByCode busca un producto por código EAN
+func (s *Storage) GetCommercialProductByCode(code string) (*model.CommercialProduct, error) {
+	sqlQuery := `
+	SELECT code, product_name, brands, nutriscore_grade, nova_group,
+	       ingredients_text, categories_tags, image_url,
+	       energy_kcal, protein, fat, carbs, fiber, salt
+	FROM commercial_products
+	WHERE code = ? LIMIT 1;`
+
+	var p model.CommercialProduct
+	var brands, nutriscore, nova, ingr, cat, img sql.NullString
+	err := s.db.QueryRow(sqlQuery, code).Scan(
+		&p.Code, &p.ProductName, &brands, &nutriscore, &nova,
+		&ingr, &cat, &img,
+		&p.EnergyKcal, &p.Protein, &p.Fat, &p.Carbs, &p.Fiber, &p.Salt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	p.Brands = brands.String
+	p.NutriscoreGrade = nutriscore.String
+	p.NovaGroup = nova.String
+	p.IngredientsText = ingr.String
+	p.CategoriesTags = cat.String
+	p.ImageURL = img.String
+	return &p, nil
+}
+
+// CountCommercialProducts cuenta cuántos productos comerciales están indexados
+func (s *Storage) CountCommercialProducts() (int, error) {
+	var count int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM commercial_products").Scan(&count)
+	return count, err
+}
+
+// CountPrimaryFoods cuenta cuántos alimentos primarios están registrados en BEDCA
+func (s *Storage) CountPrimaryFoods() (int, error) {
+	var count int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM foods").Scan(&count)
+	return count, err
+}
+
+
+// SaveIngredientMapping guarda una asociación persistente
+func (s *Storage) SaveIngredientMapping(m model.IngredientMapping) error {
+	rawJSON, _ := json.Marshal(m.CommercialCodes)
+	query := `INSERT INTO ingredient_mappings (raw_term, canonical_primary_id, commercial_codes, confidence, source, updated_at)
+		VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+		ON CONFLICT(raw_term) DO UPDATE SET
+			canonical_primary_id = excluded.canonical_primary_id,
+			commercial_codes = excluded.commercial_codes,
+			confidence = excluded.confidence,
+			source = excluded.source,
+			updated_at = CURRENT_TIMESTAMP;`
+	_, err := s.db.Exec(query, strings.ToLower(strings.TrimSpace(m.RawTerm)), m.CanonicalPrimaryID, string(rawJSON), m.Confidence, m.Source)
+	return err
+}
+
+// GetIngredientMapping busca una asociación persistente
+func (s *Storage) GetIngredientMapping(rawTerm string) (*model.IngredientMapping, error) {
+	term := strings.ToLower(strings.TrimSpace(rawTerm))
+	var m model.IngredientMapping
+	var commCodesJSON sql.NullString
+	err := s.db.QueryRow("SELECT raw_term, canonical_primary_id, commercial_codes, confidence, source FROM ingredient_mappings WHERE raw_term = ?", term).
+		Scan(&m.RawTerm, &m.CanonicalPrimaryID, &commCodesJSON, &m.Confidence, &m.Source)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if commCodesJSON.Valid && commCodesJSON.String != "" {
+		_ = json.Unmarshal([]byte(commCodesJSON.String), &m.CommercialCodes)
+	}
+	return &m, nil
+}
+
 // Close cierra la conexión a la base de datos
 func (s *Storage) Close() error {
 	return s.db.Close()
 }
+
+// SaveProductPrimaryBases guarda en lote las relaciones producto -> base primaria
+func (s *Storage) SaveProductPrimaryBases(bases []model.ProductPrimaryBase) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`INSERT INTO product_primary_bases (
+		product_code, primary_food_id, position, percentage, is_main_base, purity_score
+	) VALUES (?, ?, ?, ?, ?, ?)
+	ON CONFLICT(product_code, primary_food_id) DO UPDATE SET
+		position = excluded.position,
+		percentage = excluded.percentage,
+		is_main_base = excluded.is_main_base,
+		purity_score = excluded.purity_score`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, b := range bases {
+		if _, err := stmt.Exec(b.ProductCode, b.PrimaryFoodID, b.Position, b.Percentage, b.IsMainBase, b.PurityScore); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// GetProductsByPrimaryFoodBase busca productos comerciales indexados por base primaria en O(1) con filtros de pureza y orden
+func (s *Storage) GetProductsByPrimaryFoodBase(primaryID string, mainOnly bool, minPurity float64, limit int) ([]model.CommercialProductWithBase, error) {
+	if limit <= 0 {
+		limit = 30
+	}
+
+	mainClause := ""
+	if mainOnly {
+		mainClause = "AND ppb.is_main_base = 1"
+	}
+
+	sqlQuery := fmt.Sprintf(`
+	SELECT p.code, p.product_name, p.brands, p.nutriscore_grade, p.nova_group,
+	       p.ingredients_text, p.categories_tags, p.image_url,
+	       p.energy_kcal, p.protein, p.fat, p.carbs, p.fiber, p.salt,
+	       ppb.primary_food_id, ppb.position, ppb.percentage, ppb.is_main_base, ppb.purity_score
+	FROM commercial_products p
+	JOIN product_primary_bases ppb ON ppb.product_code = p.code
+	WHERE (ppb.primary_food_id = ? OR ppb.primary_food_id LIKE ?)
+	  AND ppb.purity_score >= ?
+	  %s
+	ORDER BY
+	  ppb.position ASC,
+	  ppb.purity_score DESC,
+	  CASE
+	    WHEN p.nutriscore_grade = 'a' THEN 1
+	    WHEN p.nutriscore_grade = 'b' THEN 2
+	    WHEN p.nutriscore_grade = 'c' THEN 3
+	    WHEN p.nutriscore_grade = 'd' THEN 4
+	    WHEN p.nutriscore_grade = 'e' THEN 5
+	    ELSE 6
+	  END ASC
+	LIMIT ?;`, mainClause)
+
+	likePattern := "%" + primaryID + "%"
+	rows, err := s.db.Query(sqlQuery, primaryID, likePattern, minPurity, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []model.CommercialProductWithBase
+	for rows.Next() {
+		var item model.CommercialProductWithBase
+		var brands, nutriscore, nova, ingr, cat, img sql.NullString
+		if err := rows.Scan(
+			&item.Product.Code, &item.Product.ProductName, &brands, &nutriscore, &nova,
+			&ingr, &cat, &img,
+			&item.Product.EnergyKcal, &item.Product.Protein, &item.Product.Fat, &item.Product.Carbs, &item.Product.Fiber, &item.Product.Salt,
+			&item.BaseFoodID, &item.Position, &item.Percentage, &item.IsMainBase, &item.PurityScore,
+		); err != nil {
+			return nil, err
+		}
+		item.Product.Brands = brands.String
+		item.Product.NutriscoreGrade = nutriscore.String
+		item.Product.NovaGroup = nova.String
+		item.Product.IngredientsText = ingr.String
+		item.Product.CategoriesTags = cat.String
+		item.Product.ImageURL = img.String
+		results = append(results, item)
+	}
+
+	return results, nil
+}
+
+// GetAllCommercialProductsWithIngredients devuelve todos los productos comerciales que tienen texto de ingredientes
+func (s *Storage) GetAllCommercialProductsWithIngredients() ([]model.CommercialProduct, error) {
+	rows, err := s.db.Query(`SELECT code, product_name, brands, nutriscore_grade, nova_group,
+	       ingredients_text, categories_tags, image_url,
+	       energy_kcal, protein, fat, carbs, fiber, salt
+	FROM commercial_products
+	WHERE ingredients_text != '' AND ingredients_text IS NOT NULL`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var prods []model.CommercialProduct
+	for rows.Next() {
+		var p model.CommercialProduct
+		var brands, nutriscore, nova, ingr, cat, img sql.NullString
+		if err := rows.Scan(
+			&p.Code, &p.ProductName, &brands, &nutriscore, &nova,
+			&ingr, &cat, &img,
+			&p.EnergyKcal, &p.Protein, &p.Fat, &p.Carbs, &p.Fiber, &p.Salt,
+		); err != nil {
+			return nil, err
+		}
+		p.Brands = brands.String
+		p.NutriscoreGrade = nutriscore.String
+		p.NovaGroup = nova.String
+		p.IngredientsText = ingr.String
+		p.CategoriesTags = cat.String
+		p.ImageURL = img.String
+		prods = append(prods, p)
+	}
+	return prods, nil
+}
+
+// CountIndexedBases devuelve el número de enlaces en product_primary_bases
+func (s *Storage) CountIndexedBases() (int, error) {
+	var count int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM product_primary_bases").Scan(&count)
+	return count, err
+}
+
+

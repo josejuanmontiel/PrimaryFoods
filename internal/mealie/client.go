@@ -1,10 +1,13 @@
 package mealie
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"regexp"
@@ -59,6 +62,7 @@ type MealieRecipeDetail struct {
 	RecipeIngredient   []MealieIngredientRaw `json:"recipeIngredient"`
 	RecipeInstructions []interface{}         `json:"recipeInstructions"`
 	Tags               []interface{}         `json:"tags"`
+	Image              string                `json:"image"`
 }
 
 // MealieListResponse representa la respuesta paginada de GET /api/recipes
@@ -294,6 +298,15 @@ func ConvertMealieToModel(m MealieRecipeDetail) model.Recipe {
 		}
 	}
 
+	imgURL := ""
+	if m.Image != "" {
+		if strings.HasPrefix(m.Image, "http://") || strings.HasPrefix(m.Image, "https://") {
+			imgURL = m.Image
+		} else {
+			imgURL = fmt.Sprintf("/api/media/recipes/%s/images/original.webp", m.ID)
+		}
+	}
+
 	return model.Recipe{
 		ID:           m.ID,
 		Slug:         m.Slug,
@@ -304,6 +317,7 @@ func ConvertMealieToModel(m MealieRecipeDetail) model.Recipe {
 		Instructions: instructions,
 		Tags:         tags,
 		TotalTime:    m.TotalTime,
+		Image:        imgURL,
 		Source:       "mealie",
 	}
 }
@@ -424,3 +438,326 @@ func ParseMealieIngredient(raw MealieIngredientRaw) model.RecipeIngredient {
 		OriginalText: lineText,
 	}
 }
+
+func slugify(text string) string {
+	text = strings.ToLower(strings.TrimSpace(text))
+	text = strings.ReplaceAll(text, "á", "a")
+	text = strings.ReplaceAll(text, "é", "e")
+	text = strings.ReplaceAll(text, "í", "i")
+	text = strings.ReplaceAll(text, "ó", "o")
+	text = strings.ReplaceAll(text, "ú", "u")
+	text = strings.ReplaceAll(text, "ñ", "n")
+	reg := regexp.MustCompile(`[^a-z0-9]+`)
+	slug := reg.ReplaceAllString(text, "-")
+	return strings.Trim(slug, "-")
+}
+
+// CreateOrUpdateRecipe exporta o sube una receta a Mealie usando la API oficial (POST + PATCH)
+func (c *Client) CreateOrUpdateRecipe(ctx context.Context, recipe model.Recipe) (string, error) {
+	if recipe.Name == "" {
+		return "", fmt.Errorf("nombre de receta requerido")
+	}
+
+	// 1. Crear la receta básica vía POST /api/recipes para obtener el slug
+	createURL := fmt.Sprintf("%s/api/recipes", c.BaseURL)
+	createPayload := map[string]string{"name": recipe.Name}
+	createBytes, _ := json.Marshal(createPayload)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", createURL, strings.NewReader(string(createBytes)))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if c.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.Token)
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("error conectando con Mealie: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var slug string
+	if resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
+		var res interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&res); err == nil {
+			switch v := res.(type) {
+			case string:
+				slug = v
+			case map[string]interface{}:
+				if s, ok := v["slug"].(string); ok && s != "" {
+					slug = s
+				} else if s, ok := v["name"].(string); ok {
+					slug = s
+				}
+			}
+		}
+	} else {
+		if recipe.Slug != "" {
+			slug = recipe.Slug
+		} else {
+			slug = slugify(recipe.Name)
+		}
+	}
+
+	if slug == "" {
+		if recipe.Slug != "" {
+			slug = recipe.Slug
+		} else {
+			slug = slugify(recipe.Name)
+		}
+	}
+
+	// 2. Obtener la receta base de Mealie para preservar identificadores internos
+	_, err = c.GetRecipeDetail(ctx, slug)
+	if err != nil {
+		if recipe.Slug != "" && recipe.Slug != slug {
+			slug = recipe.Slug
+			_, err = c.GetRecipeDetail(ctx, slug)
+		}
+		if err != nil {
+			return "", fmt.Errorf("error obteniendo detalle de receta base '%s' en Mealie: %w", slug, err)
+		}
+	}
+
+	// 3. Convertir ingredientes a la estructura esperada por Mealie
+	var mealieIngredients []map[string]interface{}
+	for _, ing := range recipe.Ingredients {
+		noteText := ing.OriginalText
+		if noteText == "" {
+			if ing.Amount > 0 && ing.Unit != "" {
+				noteText = fmt.Sprintf("%.2g %s %s", ing.Amount, ing.Unit, ing.Name)
+			} else if ing.Amount > 0 {
+				noteText = fmt.Sprintf("%.2g %s", ing.Amount, ing.Name)
+			} else {
+				noteText = ing.Name
+			}
+		}
+		noteText = strings.TrimSpace(noteText)
+
+		mealieIngredients = append(mealieIngredients, map[string]interface{}{
+			"quantity":     ing.Amount,
+			"unit":         nil,
+			"food":         nil,
+			"note":         noteText,
+			"display":      noteText,
+			"title":        nil,
+			"originalText": noteText,
+			"referenceId":  nil,
+		})
+	}
+
+	// 4. Convertir instrucciones a formato steps
+	var mealieInstructions []map[string]interface{}
+	for _, step := range recipe.Instructions {
+		step = strings.TrimSpace(step)
+		if step == "" {
+			continue
+		}
+		mealieInstructions = append(mealieInstructions, map[string]interface{}{
+			"title":                "",
+			"summary":              "",
+			"text":                 step,
+			"ingredientReferences": []interface{}{},
+		})
+	}
+
+	// 5. Preparar PATCH
+	servings := recipe.Yield
+	if servings <= 0 {
+		servings = 2
+	}
+
+	patchPayload := map[string]interface{}{
+		"description":        recipe.Description,
+		"recipeServings":     servings,
+		"recipeIngredient":   mealieIngredients,
+		"recipeInstructions": mealieInstructions,
+	}
+
+	if len(recipe.Tags) > 0 {
+		var tagObjs []map[string]string
+		for _, t := range recipe.Tags {
+			t = strings.TrimSpace(t)
+			if t == "" {
+				continue
+			}
+			tagObjs = append(tagObjs, map[string]string{
+				"name": t,
+				"slug": slugify(t),
+			})
+		}
+		patchPayload["tags"] = tagObjs
+	}
+	if recipe.TotalTime != "" {
+		patchPayload["totalTime"] = recipe.TotalTime
+	}
+
+	patchURL := fmt.Sprintf("%s/api/recipes/%s", c.BaseURL, slug)
+	patchBytes, _ := json.Marshal(patchPayload)
+
+	patchReq, err := http.NewRequestWithContext(ctx, "PATCH", patchURL, strings.NewReader(string(patchBytes)))
+	if err != nil {
+		return "", err
+	}
+	patchReq.Header.Set("Content-Type", "application/json")
+	if c.Token != "" {
+		patchReq.Header.Set("Authorization", "Bearer "+c.Token)
+	}
+
+	patchResp, err := c.HTTPClient.Do(patchReq)
+	if err != nil {
+		return "", fmt.Errorf("error enviando actualización a Mealie: %w", err)
+	}
+	defer patchResp.Body.Close()
+
+	if patchResp.StatusCode != http.StatusOK && patchResp.StatusCode != http.StatusNoContent {
+		b, _ := io.ReadAll(patchResp.Body)
+		return "", fmt.Errorf("HTTP %d al actualizar receta '%s' en Mealie: %s", patchResp.StatusCode, slug, string(b))
+	}
+
+	// 6. Subir imagen a Mealie si la receta tiene imagen asociada (base64, URL o archivo local)
+	if recipe.Image != "" {
+		if err := c.UploadRecipeImageFromString(ctx, slug, recipe.Image); err != nil {
+			fmt.Printf("⚠️ No se pudo subir imagen a Mealie para '%s': %v\n", slug, err)
+		}
+	}
+
+	return slug, nil
+}
+
+// UploadRecipeImageFromString sube una imagen a Mealie a partir de un string (data URI base64, URL remota o ruta local)
+func (c *Client) UploadRecipeImageFromString(ctx context.Context, slug, imageStr string) error {
+	imageStr = strings.TrimSpace(imageStr)
+	if imageStr == "" {
+		return nil
+	}
+
+	var imgBytes []byte
+	ext := "jpg"
+
+	if strings.HasPrefix(imageStr, "data:") {
+		// Formato data URI: data:image/jpeg;base64,...
+		parts := strings.SplitN(imageStr, ",", 2)
+		if len(parts) == 2 {
+			mimePart := parts[0]
+			if strings.Contains(mimePart, "png") {
+				ext = "png"
+			} else if strings.Contains(mimePart, "webp") {
+				ext = "webp"
+			}
+			b, err := base64.StdEncoding.DecodeString(parts[1])
+			if err != nil {
+				return fmt.Errorf("error decodificando imagen base64: %w", err)
+			}
+			imgBytes = b
+		}
+	} else if strings.HasPrefix(imageStr, "http://") || strings.HasPrefix(imageStr, "https://") {
+		// Es URL externa -> Scrapear usando endpoint de Mealie
+		return c.ScrapeRecipeImageURL(ctx, slug, imageStr)
+	} else if _, err := os.Stat(imageStr); err == nil {
+		// Es ruta de archivo en disco
+		b, err := os.ReadFile(imageStr)
+		if err != nil {
+			return err
+		}
+		imgBytes = b
+		if strings.HasSuffix(strings.ToLower(imageStr), ".png") {
+			ext = "png"
+		} else if strings.HasSuffix(strings.ToLower(imageStr), ".webp") {
+			ext = "webp"
+		}
+	} else {
+		// Probar base64 directo sin cabecera data:
+		b, err := base64.StdEncoding.DecodeString(imageStr)
+		if err == nil && len(b) > 100 {
+			imgBytes = b
+		}
+	}
+
+	if len(imgBytes) == 0 {
+		return nil
+	}
+
+	return c.UploadRecipeImage(ctx, slug, imgBytes, ext)
+}
+
+// UploadRecipeImage sube el archivo binario de la imagen a Mealie vía PUT /api/recipes/{slug}/image
+func (c *Client) UploadRecipeImage(ctx context.Context, slug string, imgBytes []byte, ext string) error {
+	if ext == "" {
+		ext = "jpg"
+	}
+
+	targetURL := fmt.Sprintf("%s/api/recipes/%s/image", c.BaseURL, slug)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// Campo extension requerido por la API de Mealie
+	if err := writer.WriteField("extension", ext); err != nil {
+		return err
+	}
+
+	// Campo image (archivo binario)
+	part, err := writer.CreateFormFile("image", fmt.Sprintf("recipe.%s", ext))
+	if err != nil {
+		return err
+	}
+	if _, err := part.Write(imgBytes); err != nil {
+		return err
+	}
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "PUT", targetURL, body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if c.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.Token)
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error enviando imagen a Mealie: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		b, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP %d al subir imagen a Mealie para '%s': %s", resp.StatusCode, slug, string(b))
+	}
+
+	return nil
+}
+
+// ScrapeRecipeImageURL asocia una URL de imagen a la receta usando POST /api/recipes/{slug}/image de Mealie
+func (c *Client) ScrapeRecipeImageURL(ctx context.Context, slug, imageURL string) error {
+	targetURL := fmt.Sprintf("%s/api/recipes/%s/image", c.BaseURL, slug)
+	payload := map[string]string{"url": imageURL}
+	data, _ := json.Marshal(payload)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", targetURL, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if c.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.Token)
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		b, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("HTTP %d al asociar URL de imagen en Mealie: %s", resp.StatusCode, string(b))
+	}
+	return nil
+}
+

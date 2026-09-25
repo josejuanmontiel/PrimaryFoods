@@ -31,21 +31,34 @@ PrimaryFoods evoluciona para convertirse en el **cerebro nutricional, analizador
 
 ---
 
-## 📦 Épica : Hacer analisis de los nombre vacios... 
+## 📦 Épica 1: Pre-Tratamiento, Ingestión y Deconstrucción de Productos Comerciales (OFF)
 
-## 📦 Épica 1: Pre-Tratamiento y Deconstrucción de Productos Comerciales (OFF)
+> **Objetivo:** Analizar el texto de ingredientes de los productos de OpenFoodFacts para descomponerlos en sus alimentos primarios base, vincular recetas con opciones comerciales reales y clasificar por calidad nutricional (Nutriscore, Nova, pureza).
 
-> **Objetivo:** Analizar el texto de ingredientes de los productos de OpenFoodFacts para descomponerlos en sus alimentos primarios base, respetando el orden legal de etiquetado (de mayor a menor proporción).
-
-- [ ] **Parser de Lista de Ingredientes de Mayor a Menor**:
-  - Extraer y ordenar los ingredientes de `ingredients_text` de cada producto de OFF.
-  - Identificar el **Top 1 a Top 3 de ingredientes base** (ej. en un bote de pisto: 1º Tomate 50%, 2º Calabacín 25%, 3º Pimiento 15%...).
-  - Mapear cada término al identificador canónico de `PrimaryFood` (`primary:tomate`, `primary:calabacin`, etc.).
-- [ ] **Detector de Aditivos y Grado de Pureza**:
-  - Identificar aditivos (E-numbers) y alérgenos en el volcado.
-  - Asignar una "métrica de pureza" (relación % alimento primario fresco vs azúcares añadidos, aceites refinados y conservantes).
-- [ ] **Buscador Inverso por Bases de Despensa**:
-  - Endpoint `/api/products/by-base?primary=garbanzo`: Permite consultar qué productos de la despensa o del supermercado contienen como base un alimento primario concreto.
+- [x] **Ingestión e Indexación Ligera de OpenFoodFacts (España)**:
+  - [x] Parser en streaming (`internal/importer/off.go`) para `spain_products.tsv.zz` (zlib).
+  - [x] Tabla SQLite `commercial_products` con más de 50.000 productos con ingredientes, Nutriscore (A-E), Nova (1-4) y macros.
+  - [x] Buscador de productos comerciales (`/api/products/search`) ordenado por salud/calidad (Nutriscore A/B y Nova 1/2 primero).
+- [x] **Ingestor de Recetas JSON / Schema.org (Paso 0 - OCR Qwen-VL & Mealie)**:
+  - [x] Parser `internal/importer/recipe_json.go` compatible con extracciones OCR de PDFs y Schema.org.
+  - [x] Endpoint `POST /api/recipes/import-json` y flag CLI `-recipes` para carga aditiva.
+- [x] **Analizador y Deconstructor de Ingredientes de Recetas ("Despensa / Supermercado")**:
+  - [x] Algoritmo `internal/matcher/analyzer.go` que descompone cada ingrediente:
+    1. Limpieza de medidas/unidades (`CleanIngredientName`: tazas, cucharadas, tiras, stopwords).
+    2. Identificación de Alimento Primario base (`BEDCA` + aliases con límites de palabra para evitar falsos positivos).
+    3. Búsqueda de alternativas comerciales de supermercado en OFF (`commercial_products`) clasificadas por calidad.
+    4. Detección y reporte de ingredientes huérfanos.
+  - [x] CLI de benchmarking `cmd/analyzer/main.go` y endpoint `GET /api/recipes/analyze`.
+  - [x] **Resultado benchmark 15 recetas extraídas de PDF**: 100% de cobertura resuelta (80% primarios, 20% productos comerciales OFF, 0% huérfanos).
+- [x] **Detector de Aditivos y Grado de Pureza Normativo (Reglamento UE 1169/2011)**:
+  - [x] Parser `internal/importer/label_parser.go` que descompone `ingredients_text` respetando orden legal decreciente por peso.
+  - [x] Extracción de porcentajes QUID (`25%`, `55,5%`).
+  - [x] Detector de aditivos (E-numbers y categorías funcionales) con clasificación de riesgo (`alto`, `medio`, `bajo`).
+  - [x] Detector de azúcares añadidos/jarabes y grasas refinadas de palma.
+  - [x] Cálculo de `EstimatedPurityScore` (0-100) y deconstrucción de productos (`GET /api/products/{code}/deconstruct`).
+- [x] **Buscador Inverso por Bases de Despensa**:
+  - [x] Endpoint `GET /api/products/by-base?primary=garbanzo` y CLI (`-by-base garbanzo`).
+  - [x] Localiza qué productos del supermercado contienen como base principal o secundaria un alimento primario concreto, ordenados por pureza.
 
 ---
 
@@ -90,12 +103,14 @@ PrimaryFoods evoluciona para convertirse en el **cerebro nutricional, analizador
   - [x] Endpoint `POST /api/sync/buscatureceta` para recibir `{ pantry, diary, diaryVersions }`.
   - [x] Almacenamiento en SQLite de `user_pantry` y `user_diary_history`.
 - [x] **Esquema de Exportación Compatible y Gestor de Faltantes**:
-  - [x] Formato JSON unificado `buscatureceta_menu_pack.json`:
-    - `recipes`: Recetas seleccionadas del catálogo listas para guardar en Dexie `recipes`.
+  - [x] Formato JSON unificado `buscatureceta_menu_pack.json` y exportador `/api/export/buscatureceta`:
+    - `recipes`: Recetas analizadas con vinculación canónica BEDCA (`primaryFoodId`) y alternativas comerciales de supermercados españoles (EAN, Nutriscore, pureza).
     - `shoppingList`: Ingredientes faltantes calculados respecto a la despensa para agregar a la compra.
     - `diaryPlan`: Propuesta de planificación de comidas para inyectar en la agenda (`diary`).
   - [x] Botón rápido en tarjetas de recetas `📋 Copiar faltantes (N)` para el portapapeles.
   - [x] Modal global en la UI `🛒 Faltantes y Pack Buscatureceta` con copia de lista de compra y descarga del `.json`.
+  - [x] Especificación OpenAPI 3.1.0 completa (`/api/openapi.yaml`, `/api/openapi.json`) y visor interactivo `/docs` (Scalar UI).
+  - [x] Web SPA analítica unificada con 6 pestañas interactivas (Analizador Recetas, Buscador Base OFF, Deconstructor Legal UE 1169/2011, Despensa ➔ Receta, Exportador Buscatureceta, OpenAPI 3.1).
 - [ ] **Importador Aditivo en Buscatureceta (Próxima Sesión)**:
   - [ ] Implementar `importMenuPlanPackage(json)` en Buscatureceta para realizar una importación aditiva/merge (sin limpiar la base de datos).
   - [ ] Inyectar recetas en `db.recipes`, comidas en `db.diary` y faltantes en `db.cart`.

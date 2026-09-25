@@ -39,6 +39,11 @@ func NewMatcher(foods []model.PrimaryFood) *RecipeMatcher {
 	}
 }
 
+// GetAliasMap devuelve el mapa de alias normalizados a ID canónico
+func (m *RecipeMatcher) GetAliasMap() map[string]string {
+	return m.aliasToID
+}
+
 // MatchRecipes evalúa una lista de recetas contra los productos de la despensa
 func (m *RecipeMatcher) MatchRecipes(recipes []model.Recipe, pantry []model.PantryItem, opts MatchOptions) []model.RecipeMatch {
 	// Pre-normalizar los productos de la despensa para comparaciones O(1)/rápidas
@@ -170,13 +175,39 @@ func (m *RecipeMatcher) findPrimaryID(normalized string) string {
 	if id, ok := m.aliasToID[normalized]; ok {
 		return id
 	}
-	// Probar sub-frases
-	for alias, id := range m.aliasToID {
-		if len(alias) >= 4 && (strings.Contains(normalized, alias) || strings.Contains(alias, normalized)) {
+	// 1. Probar cada palabra individual como coincidencia exacta
+	words := strings.Fields(normalized)
+	for _, w := range words {
+		if id, ok := m.aliasToID[w]; ok {
 			return id
 		}
 	}
-	return ""
+	// 2. Buscar por coincidencia de frase con límite de palabras, priorizando la más larga
+	padded := " " + normalized + " "
+	var bestMatchID string
+	var maxLen int
+	for alias, id := range m.aliasToID {
+		if len(alias) >= 4 && strings.Contains(padded, " "+alias+" ") {
+			if len(alias) > maxLen {
+				maxLen = len(alias)
+				bestMatchID = id
+			}
+		}
+	}
+	if bestMatchID != "" {
+		return bestMatchID
+	}
+
+	// 3. Si aún no encuentra, probar si el alias contiene la cadena normalizada
+	for alias, id := range m.aliasToID {
+		if len(alias) >= 4 && strings.Contains(alias, normalized) {
+			if len(alias) > maxLen {
+				maxLen = len(alias)
+				bestMatchID = id
+			}
+		}
+	}
+	return bestMatchID
 }
 
 // Stopwords y términos culinarios comunes que no aportan valor de ingrediente

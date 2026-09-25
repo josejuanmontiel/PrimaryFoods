@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/josejuanmontiel/primaryfoods/internal/model"
 )
 
 func TestParseMealieIngredient(t *testing.T) {
@@ -98,5 +100,138 @@ func TestClient_GetRecipes(t *testing.T) {
 	}
 	if r.Ingredients[0].Name != "Aguacate" {
 		t.Errorf("Ingrediente 1 incorrecto: %s", r.Ingredients[0].Name)
+	}
+}
+
+func TestClient_CreateOrUpdateRecipe(t *testing.T) {
+	step := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer test-token" {
+			t.Errorf("Esperaba token Bearer test-token, recibido %s", r.Header.Get("Authorization"))
+		}
+
+		if r.Method == "POST" && r.URL.Path == "/api/recipes" {
+			step++
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte(`"hummus-de-garbanzos"`))
+			return
+		}
+
+		if r.Method == "GET" && r.URL.Path == "/api/recipes/hummus-de-garbanzos" {
+			step++
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"id":"rec-456","slug":"hummus-de-garbanzos","name":"Hummus de Garbanzos"}`))
+			return
+		}
+
+		if r.Method == "PATCH" && r.URL.Path == "/api/recipes/hummus-de-garbanzos" {
+			step++
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"id":"rec-456","slug":"hummus-de-garbanzos"}`))
+			return
+		}
+
+		t.Errorf("Ruta no esperada: %s %s", r.Method, r.URL.Path)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-token")
+	recipe := model.Recipe{
+		Name:        "Hummus de Garbanzos",
+		Description: "Hummus tradicional",
+		Yield:       4,
+		Ingredients: []model.RecipeIngredient{
+			{Name: "garbanzos cocidos", Amount: 400, Unit: "g"},
+		},
+		Instructions: []string{"Triturar todo.", "Servir con pimentón."},
+		Tags:         []string{"vegano", "legumbres"},
+	}
+
+	slug, err := client.CreateOrUpdateRecipe(context.Background(), recipe)
+	if err != nil {
+		t.Fatalf("CreateOrUpdateRecipe falló: %v", err)
+	}
+	if slug != "hummus-de-garbanzos" {
+		t.Errorf("Slug incorrecto: %s", slug)
+	}
+	if step != 3 {
+		t.Errorf("Esperaba 3 peticiones HTTP (POST, GET, PATCH), recibidas %d", step)
+	}
+}
+
+func TestClient_CreateOrUpdateRecipe_WithImage(t *testing.T) {
+	step := 0
+	imageUploaded := false
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" && r.URL.Path == "/api/recipes" {
+			step++
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte(`"paella-valenciana"`))
+			return
+		}
+
+		if r.Method == "GET" && r.URL.Path == "/api/recipes/paella-valenciana" {
+			step++
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"id":"rec-789","slug":"paella-valenciana","name":"Paella Valenciana"}`))
+			return
+		}
+
+		if r.Method == "PATCH" && r.URL.Path == "/api/recipes/paella-valenciana" {
+			step++
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"id":"rec-789","slug":"paella-valenciana"}`))
+			return
+		}
+
+		if r.Method == "PUT" && r.URL.Path == "/api/recipes/paella-valenciana/image" {
+			step++
+			imageUploaded = true
+			if err := r.ParseMultipartForm(10 << 20); err != nil {
+				t.Fatalf("Error parseando multipart form: %v", err)
+			}
+			ext := r.FormValue("extension")
+			if ext != "jpg" && ext != "jpeg" {
+				t.Errorf("Extensión inesperada: %s", ext)
+			}
+			file, _, err := r.FormFile("image")
+			if err != nil {
+				t.Fatalf("Campo image no encontrado en multipart: %v", err)
+			}
+			defer file.Close()
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status":"success"}`))
+			return
+		}
+
+		t.Errorf("Ruta no esperada: %s %s", r.Method, r.URL.Path)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "test-token")
+	recipe := model.Recipe{
+		Name:        "Paella Valenciana",
+		Description: "Auténtica paella",
+		Yield:       4,
+		Ingredients: []model.RecipeIngredient{
+			{Name: "arroz", Amount: 400, Unit: "g"},
+		},
+		Instructions: []string{"Sofreír.", "Añadir caldo.", "Cocer arroz."},
+		Image:        "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=",
+	}
+
+	slug, err := client.CreateOrUpdateRecipe(context.Background(), recipe)
+	if err != nil {
+		t.Fatalf("CreateOrUpdateRecipe con imagen falló: %v", err)
+	}
+	if slug != "paella-valenciana" {
+		t.Errorf("Slug incorrecto: %s", slug)
+	}
+	if !imageUploaded {
+		t.Errorf("La imagen no fue subida a Mealie")
+	}
+	if step != 4 {
+		t.Errorf("Esperaba 4 peticiones HTTP (POST, GET, PATCH, PUT /image), recibidas %d", step)
 	}
 }

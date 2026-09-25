@@ -1,0 +1,6 @@
+{
+  "mealieUrl": "http://localhost:9925",
+  "mealieToken": "TU_TOKEN_DE_MEALIE_AQUI",
+  "port": "8086",
+  "dbPath": "data/primaryfoods.db"
+}
