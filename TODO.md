@@ -131,3 +131,96 @@ PrimaryFoods evoluciona para convertirse en el **cerebro nutricional, analizador
 - [ ] **Detector de Carencias y Retroalimentación**:
   - Resumen semanal de ingestas reales: *"Esta semana faltó un 30% del objetivo de fibra y no hubo ración de pescado azul"*.
   - Enviar estas carencias como parámetro al generador del siguiente menú semanal en PrimaryFoods para compensarlas automáticamente.
+
+---
+
+## ✂️ Épica 6: Visualizador & Podador de Backups de NutriAgenda (Curación & Saneamiento)
+
+> **Objetivo:** Disponer de una estación visual en PrimaryFoods con interfaz simplificada estilo NutriAgenda para inspeccionar copias de seguridad (`nutriagenda_backup_*.json`), "podar" de forma selectiva o masiva recetas, despensa, diario y compras obsoletas, retocar inventario a gusto y purgar blobs innecesarios, exportando un JSON limpio, íntegro y curado para NutriAgenda.
+
+- [ ] **Arquitectura de Poda en Cascada e Integridad Referencial**:
+  - `recipes` ➔ Purgar automáticamente sus snapshots en `recipeVersions` y advertir si existen referencias vivas en `diary`.
+  - `pantry` ➔ Ofrecer purga sincronizada en `pantryLog` al eliminar un producto.
+  - `diary` ➔ Purgar en cascada sus entradas históricas en `diaryVersions`.
+- [ ] **Doble Modo de Poda en la UI**:
+  - **1. Modo Poda Quirúrgica (Manual por secciones)**:
+    - **🍳 Recetas & Plantillas (`recipes`, `recipeVersions`, `mealTemplates`)**: Grid de tarjetas con ingredientes desplegables y botón `🗑️ Podar`.
+    - **🥫 Despensa e Inventario (`pantry`, `pantryLog`)**: Selector de zona (`food` / `nonfood`), buscador instantáneo, edición ágil inline de cantidades/unidades y botón `❌ Podar`.
+    - **📅 Diario y Objetivos (`diary`, `diaryVersions`, `goals`)**: Línea temporal de comidas para podar días completos o tomas individuales de prueba.
+    - **🛒 Compras y Listas (`shoppingLists`, `cart`, `cartHistory`, `priceHistory`)**: Eliminación de listas archivadas, carritos y tickets antiguos.
+    - **🏷️ Productos Propios & Frecuentes (`customProducts`, `recentProducts`)**: Poda de productos manuales obsoletos y vaciado del historial de escaneos.
+    - **📸 Multimedia y Subidas (`pendingUploads`, `mealPhotos`)**: Purgado de fotos subidas y fotos de platos para aligerar espacio.
+  - **2. Modo Poda Rápida en 1 Clic (Filtros Globales de Saneamiento)**:
+    - `[ 🧹 Vaciar productos recientes / caché ]`
+    - `[ 🧹 Eliminar artículos con stock 0 de despensa ]`
+    - `[ 🧹 Purgar blobs de uploads completados a OFF (-900 KB) ]`
+    - `[ 🧹 Despojar fotos pesadas de tickets archivados conservando metadatos ]`
+- [ ] **Métricas Reactivas y Exportación NutriAgenda**:
+  - Contador reactivo de poda (ej: *"Recetas: 5 ➔ 3 \| Despensa: 51 ➔ 42 \| Tamaño: 1.34 MB ➔ 38 KB"*).
+  - Botón: *"📥 Descargar Backup Podado"* (JSON 100% compatible con el importador de NutriAgenda / Buscatureceta).
+
+
+---
+
+## 📅 Épica 7: Planificación de Menús a Largo Plazo (Fase 1 → 4)
+
+> **Objetivo:** Sistema completo de planificación de menús anuales basado en vida útil, estacionalidad y criterios mediterráneos.
+
+### ✅ Fase 1 — Vida Útil y Fechas de Caducidad (COMPLETADA)
+
+- [x] **Dexie v14**: Índice `expiryDate` en tabla `pantry` (Buscatureceta)
+- [x] **ShelfLifeEstimator.js**: Motor heurístico 3 capas (OFF categories_tags → BEDCA → palabras clave) con fallback
+- [x] **PantryStore.js**: `addStock()` con estimación automática; `updateExpiryDate()`; `getPantryInventory()` enriquecido con `expiryInfo`
+- [x] **UI**: Badge de caducidad coloreado en tarjetas (🟢 larga / 🟡 media / 🔴 crítica); editor en modal detalle; campo fecha en modal "Añadir Stock"
+- [x] **PrimaryFoods model**: `PantryItem` + `ExpiryDate`, `OpenedAt`, `IsEstimated`, `ShelfClass`
+- [x] **`internal/shelflife`**: Paquete Go con misma lógica de estimación que el motor JS
+- [x] **SQLite migration**: Columnas aditivas idempotentes en `user_pantry`; `GetPantryItems()` ordenado por caducidad
+- [x] **API**: `GET /api/pantry/shelf-life/estimate?code=&name=&categories_tags=&primary_category=`
+- [x] **Tests**: Playwright E2E (Buscatureceta) + 5 tests unitarios Go (PrimaryFoods)
+
+### ✅ Fase 2 — Matriz de Estacionalidad 52 Semanas (COMPLETADA)
+
+- [x] **Tabla `seasonal_calendar`** en PrimaryFoods SQLite (`primary_food_id`, `food_name`, `category`, `month`, `availability`, `source`)
+- [x] **Seed estacional** con datos reales de España (`internal/seed/seasonal.json`):
+  - Verduras (alcachofa, brócoli, espinacas, calabaza, tomate)
+  - Frutas (fresa/fresón, cereza, naranja, uva blanca)
+  - Pescados azules y blancos (sardina, bonito del norte, caballa)
+- [x] **Endpoint** `GET /api/seasonal/calendar?month=X&week=Y&category=Z&availability=W`
+- [x] **Lógica de semana/mes**: soporte de parámetro `week` (1-52) con cálculo de mes de referencia
+- [x] **Tests**: Cobertura con test unitario en Go (`seasonal_test.go`)
+
+### ✅ Fase 3 — Motor de Reglas y Generador de Menú Semanal (COMPLETADA)
+
+- [x] **Modelo `WeeklyMenuPlan` y `DailyMealSlot`** (`internal/model/menu_plan.go`):
+  - 14 slots (7 almuerzos + 7 cenas), contadores de legumbres, pescado, pescado azul, estacionales y rescates de despensa.
+- [x] **Motor de reglas mediterráneas** (`internal/planner/planner.go`):
+  - Detección de legumbres (lentejas, garbanzos, alubias) y pescados (blanco y azul como salmón, sardina, bonito, caballa).
+  - Distribución inteligente (almuerzos más energéticos, cenas más ligeras).
+  - Control de variedad: penalización de repetición en la misma semana.
+- [x] **Priorización de despensa anti-desperdicio**:
+  - Bonus para ingredientes marcados como `critical` o `short` (< 15 días a caducar).
+- [x] **Alineación con estacionalidad**:
+  - Bonus para alimentos en temporada pico (`peak`) o disponible (`available`).
+- [x] **Endpoints API**:
+  - `GET /api/menu/generate?week=XX&year=YYYY&prioritize_pantry=true&fuel_saving=true`
+  - `POST /api/menu/generate` (para planificación ad-hoc con recetas o despensa personalizadas)
+  - `GET /api/cooking/energy-profiles?class=` (zero, minimal, medium, high)
+- [x] **Eficiencia Energética de Cocinado ("Low-Fuel / Survival Mode")**:
+  - Clasificación en 4 niveles de combustible (`zero`, `minimal`, `medium`, `high`) y catálogo semilla (`cooking_energy.json`).
+  - Métodos pasivos de ahorro (cuscús en reposo térmico, cocción pasiva de pasta/huevos con tapa, remojo de legumbres y alternativa directa de conserva).
+  - Modo `fuelSavingMode` en el planificador: prioriza platos sin fuego (`zero`) y de hervor rápido (`minimal`), penalizando cocciones largas.
+- [x] **Ampliación Catálogo Estacional y Eficiencia Energética**:
+  - Formato compacto `seasonal_definitions.json` con más de 66 alimentos españoles (MAPA) expandidos a 479 registros anuales.
+  - Catálogo extendido `cooking_energy.json` con 25 perfiles de preparación (zero, minimal, medium, high), técnicas pasivas térmicas y alternativas de conserva.
+- [x] **Importadores de Fuentes Externas (Remotas / Locales)**:
+  - `internal/importer/seasonal.go`: Importador polimórfico de calendarios estacionales (JSON directo, definiciones compactas `peakMonths`/`availableMonths`, o CSV) desde URL HTTP o fichero local.
+  - `internal/importer/cooking.go`: Importador de perfiles de preparación y eficiencia energética desde URL o fichero (compatible con formatos directos y USDA FoodKeeper).
+  - Endpoints de importación: `POST /api/seasonal/import` y `POST /api/cooking/import`.
+  - Cobertura con test unitario en `seasonal_cooking_test.go`.
+- [x] **Tests**: Cobertura con test unitario en Go (`planner_test.go`, `seasonal_test.go`, `menu_test.go` y `seasonal_cooking_test.go`)
+
+### ✅ Fase 4 — Planificador Anual Batch y Exportación (COMPLETADA)
+
+- [x] **Algoritmo batch 52 semanas** (sin repetir receta > 1x cada 10 días)
+- [x] **UI en PrimaryFoods**: vista calendario anual (grid semanas, agrupado por mes, expandible)
+- [x] **Export masivo JSON** → importar en NutriAgenda / Buscatureceta (`/api/menu/annual/export`)

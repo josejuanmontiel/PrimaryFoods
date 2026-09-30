@@ -84,3 +84,18 @@ func TestUpsertAndGetByID(t *testing.T) {
 		t.Fatalf("Se esperaba obtener moringa, obtenido: %+v", fetched)
 	}
 }
+
+func TestCookingEnergySeed(t *testing.T) {
+	s := setupTestStorage(t)
+	defer s.Close()
+
+	profiles, err := s.GetCookingProfiles("")
+	if err != nil {
+		t.Fatalf("GetCookingProfiles falló: %v", err)
+	}
+	t.Logf("Perfiles cargados en storage test: %d", len(profiles))
+	if len(profiles) < 20 {
+		t.Fatalf("Se esperaban al menos 20 perfiles de cocción, obtenido: %d", len(profiles))
+	}
+}
+

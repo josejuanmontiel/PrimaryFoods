@@ -3,4 +3,5 @@ bin/
 config.json
 internal/api/config.json
 data/qwen_recipes.json
+nutriagenda_backup_*.json
 

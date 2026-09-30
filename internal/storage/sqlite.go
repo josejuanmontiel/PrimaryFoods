@@ -79,6 +79,10 @@ func (s *Storage) initSchema() error {
 			amount REAL DEFAULT 0,
 			unit TEXT DEFAULT '',
 			pantry_zone TEXT DEFAULT 'food',
+			expiry_date TEXT,
+			opened_at TEXT,
+			is_estimated INTEGER DEFAULT 0,
+			shelf_class TEXT DEFAULT '',
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		);`,
 		`CREATE TABLE IF NOT EXISTS user_diary (
@@ -140,6 +144,17 @@ func (s *Storage) initSchema() error {
 			purity_score REAL DEFAULT 50.0,
 			PRIMARY KEY (product_code, primary_food_id)
 		);`,
+		`CREATE TABLE IF NOT EXISTS seasonal_calendar (
+			id INTEGER PRIMARY KEY,
+			primary_food_id TEXT NOT NULL,
+			food_name TEXT NOT NULL,
+			category TEXT NOT NULL,
+			month INTEGER NOT NULL,
+			availability TEXT NOT NULL,
+			source TEXT DEFAULT 'MAPA_ES',
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(primary_food_id, month)
+		);`,
 		`CREATE INDEX IF NOT EXISTS idx_foods_category ON foods(category);`,
 		`CREATE INDEX IF NOT EXISTS idx_foods_name ON foods(name);`,
 		`CREATE INDEX IF NOT EXISTS idx_aliases_alias ON food_aliases(alias);`,
@@ -153,6 +168,32 @@ func (s *Storage) initSchema() error {
 		`CREATE INDEX IF NOT EXISTS idx_ppb_primary ON product_primary_bases(primary_food_id);`,
 		`CREATE INDEX IF NOT EXISTS idx_ppb_position ON product_primary_bases(position);`,
 		`CREATE INDEX IF NOT EXISTS idx_ppb_main ON product_primary_bases(is_main_base);`,
+		`CREATE TABLE IF NOT EXISTS cooking_profiles (
+			primary_food_id TEXT PRIMARY KEY,
+			food_name TEXT NOT NULL,
+			category TEXT NOT NULL,
+			default_energy_class TEXT NOT NULL,
+			default_fire_minutes INTEGER DEFAULT 0,
+			zero_fuel_alternative TEXT,
+			data_json TEXT NOT NULL,
+			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE INDEX IF NOT EXISTS idx_cooking_energy_class ON cooking_profiles(default_energy_class);`,
+		`CREATE INDEX IF NOT EXISTS idx_seasonal_month ON seasonal_calendar(month);`,
+		`CREATE INDEX IF NOT EXISTS idx_seasonal_cat_month ON seasonal_calendar(category, month);`,
+		`CREATE INDEX IF NOT EXISTS idx_seasonal_food ON seasonal_calendar(primary_food_id);`,
+	}
+
+	// Migración aditiva: añadir columnas nuevas a BDs ya existentes (idempotente)
+	migrations := []string{
+		`ALTER TABLE user_pantry ADD COLUMN expiry_date TEXT`,
+		`ALTER TABLE user_pantry ADD COLUMN opened_at TEXT`,
+		`ALTER TABLE user_pantry ADD COLUMN is_estimated INTEGER DEFAULT 0`,
+		`ALTER TABLE user_pantry ADD COLUMN shelf_class TEXT DEFAULT ''`,
+	}
+	for _, m := range migrations {
+		// SQLite devuelve error si la columna ya existe — lo ignoramos
+		s.db.Exec(m) //nolint:errcheck
 	}
 
 	for _, q := range queries {
@@ -169,21 +210,74 @@ func (s *Storage) seedIfEmpty() error {
 		return err
 	}
 
-	if count > 0 {
-		return nil // Ya tiene datos
+	if count == 0 {
+		defaultFoods, err := seed.GetDefaultFoods()
+		if err != nil {
+			return err
+		}
+
+		for _, f := range defaultFoods {
+			if err := s.Upsert(f); err != nil {
+				return fmt.Errorf("error insertando alimento semilla '%s': %w", f.ID, err)
+			}
+		}
 	}
 
-	defaultFoods, err := seed.GetDefaultFoods()
+	// Auto-seed estacionalidad si está vacía
+	if err := s.seedSeasonalIfEmpty(); err != nil {
+		return err
+	}
+
+	// Auto-seed perfiles de cocción y energía si está vacía
+	if err := s.seedCookingEnergyIfEmpty(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) seedSeasonalIfEmpty() error {
+	var count int
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM seasonal_calendar").Scan(&count); err != nil {
+		return err
+	}
+	// Si tiene menos de 450 registros (versión antigua), actualizar con el catálogo ampliado
+	if count >= 450 {
+		return nil
+	}
+
+	seasonalItems, err := seed.GetDefaultSeasonalCalendar()
 	if err != nil {
 		return err
 	}
 
-	for _, f := range defaultFoods {
-		if err := s.Upsert(f); err != nil {
-			return fmt.Errorf("error insertando alimento semilla '%s': %w", f.ID, err)
+	for _, item := range seasonalItems {
+		if err := s.UpsertSeasonalItem(item); err != nil {
+			return fmt.Errorf("error insertando item estacional '%s': %w", item.FoodName, err)
 		}
 	}
+	return nil
+}
 
+func (s *Storage) seedCookingEnergyIfEmpty() error {
+	var count int
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM cooking_profiles").Scan(&count); err != nil {
+		return err
+	}
+	if count >= 25 {
+		return nil
+	}
+
+	profiles, err := seed.GetDefaultCookingEnergyProfiles()
+	if err != nil {
+		return err
+	}
+
+	for _, p := range profiles {
+		if err := s.UpsertCookingProfile(p); err != nil {
+			return fmt.Errorf("error insertando perfil de cocción '%s': %w", p.FoodName, err)
+		}
+	}
 	return nil
 }
 
@@ -433,15 +527,24 @@ func (s *Storage) SavePantryItems(items []model.PantryItem) error {
 		return err
 	}
 
-	stmt, err := tx.Prepare(`INSERT INTO user_pantry (id, product_code, product_name, amount, unit, pantry_zone, updated_at) 
-		VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
+	stmt, err := tx.Prepare(`INSERT INTO user_pantry
+		(id, product_code, product_name, amount, unit, pantry_zone, expiry_date, opened_at, is_estimated, shelf_class, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
 	for _, item := range items {
-		if _, err := stmt.Exec(item.ID, item.ProductCode, item.ProductName, item.Amount, item.Unit, item.PantryZone); err != nil {
+		isEst := 0
+		if item.IsEstimated {
+			isEst = 1
+		}
+		if _, err := stmt.Exec(
+			item.ID, item.ProductCode, item.ProductName,
+			item.Amount, item.Unit, item.PantryZone,
+			item.ExpiryDate, item.OpenedAt, isEst, item.ShelfClass,
+		); err != nil {
 			return err
 		}
 	}
@@ -451,7 +554,11 @@ func (s *Storage) SavePantryItems(items []model.PantryItem) error {
 
 // GetPantryItems devuelve todos los productos actuales de la despensa
 func (s *Storage) GetPantryItems() ([]model.PantryItem, error) {
-	rows, err := s.db.Query("SELECT id, product_code, product_name, amount, unit, pantry_zone FROM user_pantry ORDER BY product_name ASC")
+	rows, err := s.db.Query(`
+		SELECT id, product_code, product_name, amount, unit, pantry_zone,
+		       expiry_date, opened_at, is_estimated, shelf_class
+		FROM user_pantry
+		ORDER BY CASE WHEN expiry_date IS NULL THEN 1 ELSE 0 END, expiry_date ASC, product_name ASC`)
 	if err != nil {
 		return nil, err
 	}
@@ -460,9 +567,15 @@ func (s *Storage) GetPantryItems() ([]model.PantryItem, error) {
 	var items []model.PantryItem
 	for rows.Next() {
 		var item model.PantryItem
-		if err := rows.Scan(&item.ID, &item.ProductCode, &item.ProductName, &item.Amount, &item.Unit, &item.PantryZone); err != nil {
+		var isEst int
+		if err := rows.Scan(
+			&item.ID, &item.ProductCode, &item.ProductName,
+			&item.Amount, &item.Unit, &item.PantryZone,
+			&item.ExpiryDate, &item.OpenedAt, &isEst, &item.ShelfClass,
+		); err != nil {
 			return nil, err
 		}
+		item.IsEstimated = isEst != 0
 		items = append(items, item)
 	}
 	return items, nil
@@ -907,6 +1020,138 @@ func (s *Storage) CountIndexedBases() (int, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM product_primary_bases").Scan(&count)
 	return count, err
+}
+
+// UpsertSeasonalItem inserta o actualiza la estacionalidad de un alimento para un mes
+func (s *Storage) UpsertSeasonalItem(item model.SeasonalItem) error {
+	query := `INSERT INTO seasonal_calendar (
+		primary_food_id, food_name, category, month, availability, source, updated_at
+	) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+	ON CONFLICT(primary_food_id, month) DO UPDATE SET
+		food_name = excluded.food_name,
+		category = excluded.category,
+		availability = excluded.availability,
+		source = excluded.source,
+		updated_at = CURRENT_TIMESTAMP`
+
+	_, err := s.db.Exec(query,
+		item.PrimaryFoodID,
+		item.FoodName,
+		item.Category,
+		item.Month,
+		string(item.Availability),
+		item.Source,
+	)
+	return err
+}
+
+// GetSeasonalCalendar consulta la estacionalidad con filtros opcionales (mes, categoría, disponibilidad)
+func (s *Storage) GetSeasonalCalendar(filter model.SeasonalCalendarFilter) ([]model.SeasonalItem, error) {
+	query := `SELECT primary_food_id, food_name, category, month, availability, source
+	FROM seasonal_calendar WHERE 1=1`
+	var args []interface{}
+
+	if filter.Month > 0 {
+		query += ` AND month = ?`
+		args = append(args, filter.Month)
+	}
+	if filter.Category != "" {
+		query += ` AND category = ?`
+		args = append(args, filter.Category)
+	}
+	if filter.Availability != "" {
+		query += ` AND availability = ?`
+		args = append(args, filter.Availability)
+	}
+
+	query += ` ORDER BY month ASC, category ASC, food_name ASC`
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []model.SeasonalItem
+	for rows.Next() {
+		var item model.SeasonalItem
+		var avail string
+		if err := rows.Scan(
+			&item.PrimaryFoodID,
+			&item.FoodName,
+			&item.Category,
+			&item.Month,
+			&avail,
+			&item.Source,
+		); err != nil {
+			return nil, err
+		}
+		item.Availability = model.SeasonalAvailability(avail)
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+// UpsertCookingProfile inserta o actualiza un perfil de cocción y gasto energético
+func (s *Storage) UpsertCookingProfile(p model.FoodCookingProfile) error {
+	dataJSON, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+
+	query := `INSERT INTO cooking_profiles (
+		primary_food_id, food_name, category, default_energy_class, default_fire_minutes,
+		zero_fuel_alternative, data_json, updated_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+	ON CONFLICT(primary_food_id) DO UPDATE SET
+		food_name = excluded.food_name,
+		category = excluded.category,
+		default_energy_class = excluded.default_energy_class,
+		default_fire_minutes = excluded.default_fire_minutes,
+		zero_fuel_alternative = excluded.zero_fuel_alternative,
+		data_json = excluded.data_json,
+		updated_at = CURRENT_TIMESTAMP`
+
+	_, err = s.db.Exec(query,
+		p.PrimaryFoodID,
+		p.FoodName,
+		p.Category,
+		string(p.DefaultEnergyClass),
+		p.DefaultFireMinutes,
+		p.ZeroFuelAlternative,
+		string(dataJSON),
+	)
+	return err
+}
+
+// GetCookingProfiles devuelve los perfiles de gasto energético opcionalmente filtrados por clase
+func (s *Storage) GetCookingProfiles(energyClass string) ([]model.FoodCookingProfile, error) {
+	query := `SELECT data_json FROM cooking_profiles`
+	var args []interface{}
+	if energyClass != "" {
+		query += ` WHERE default_energy_class = ?`
+		args = append(args, energyClass)
+	}
+	query += ` ORDER BY default_fire_minutes ASC, food_name ASC`
+
+	rows, err := s.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var profiles []model.FoodCookingProfile
+	for rows.Next() {
+		var dataStr string
+		if err := rows.Scan(&dataStr); err != nil {
+			return nil, err
+		}
+		var p model.FoodCookingProfile
+		if err := json.Unmarshal([]byte(dataStr), &p); err == nil {
+			profiles = append(profiles, p)
+		}
+	}
+	return profiles, nil
 }
 
 

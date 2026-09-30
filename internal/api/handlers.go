@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -17,6 +18,8 @@ import (
 	"github.com/josejuanmontiel/primaryfoods/internal/matcher"
 	"github.com/josejuanmontiel/primaryfoods/internal/mealie"
 	"github.com/josejuanmontiel/primaryfoods/internal/model"
+	"github.com/josejuanmontiel/primaryfoods/internal/planner"
+	"github.com/josejuanmontiel/primaryfoods/internal/shelflife"
 	"github.com/josejuanmontiel/primaryfoods/internal/storage"
 )
 
@@ -29,6 +32,7 @@ type Server struct {
 	matcher      *matcher.RecipeMatcher
 	analyzer     *matcher.RecipeAnalyzer
 	labelParser  *importer.LabelParser
+	planner      *planner.MenuPlanner
 }
 
 // NewServer crea un nuevo servidor HTTP con todas sus rutas registradas
@@ -45,15 +49,17 @@ func NewServer(store *storage.Storage, optCfg ...*config.Config) *Server {
 	}
 
 	foods, _ := store.ExportAll()
+	recMatcher := matcher.NewMatcher(foods)
 
 	s := &Server{
 		storage:      store,
 		mux:          http.NewServeMux(),
 		cfg:          cfg,
 		mealieClient: mealie.NewClient(cfg.MealieURL, cfg.MealieToken),
-		matcher:      matcher.NewMatcher(foods),
+		matcher:      recMatcher,
 		analyzer:     matcher.NewRecipeAnalyzer(store, foods),
 		labelParser:  importer.NewLabelParser(foods),
+		planner:      planner.NewMenuPlanner(recMatcher),
 	}
 	s.routes()
 	return s
@@ -79,6 +85,21 @@ func (s *Server) routes() {
 	// Sincronización Buscatureceta
 	s.mux.HandleFunc("POST /api/sync/buscatureceta", s.handleSyncBuscatureceta)
 	s.mux.HandleFunc("GET /api/pantry", s.handleGetPantry)
+	s.mux.HandleFunc("GET /api/pantry/shelf-life/estimate", s.handleEstimateShelfLife)
+
+	// Estacionalidad y Calendario
+	s.mux.HandleFunc("GET /api/seasonal/calendar", s.handleGetSeasonalCalendar)
+	s.mux.HandleFunc("POST /api/seasonal/import", s.handleImportSeasonal)
+
+	// Eficiencia Energética de Cocinado
+	s.mux.HandleFunc("GET /api/cooking/energy-profiles", s.handleGetCookingEnergyProfiles)
+	s.mux.HandleFunc("POST /api/cooking/import", s.handleImportCookingProfiles)
+
+	// Planificación y Generador de Menús (Semanal y Anual)
+	s.mux.HandleFunc("GET /api/menu/generate", s.handleGenerateWeeklyMenu)
+	s.mux.HandleFunc("POST /api/menu/generate", s.handlePostGenerateWeeklyMenu)
+	s.mux.HandleFunc("GET /api/menu/annual", s.handleGenerateAnnualMenu)
+	s.mux.HandleFunc("GET /api/menu/annual/export", s.handleExportAnnualMenu)
 
 	// Conexión y sincronización Mealie
 	s.mux.HandleFunc("GET /api/mealie/status", s.handleMealieStatus)
@@ -1344,5 +1365,475 @@ func (s *Server) handleExportBuscatureceta(w http.ResponseWriter, r *http.Reques
 	s.jsonResponse(w, http.StatusOK, pack)
 }
 
+// handleEstimateShelfLife — GET /api/pantry/shelf-life/estimate
+// Params (query): code, name, categories_tags, primary_category
+// Devuelve la vida útil estimada y la fecha de caducidad sugerida.
+func (s *Server) handleEstimateShelfLife(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	name := r.URL.Query().Get("name")
+	categoriesTags := r.URL.Query().Get("categories_tags")
+	primaryCategory := r.URL.Query().Get("primary_category")
+
+	// Si se proporcionó un code pero no categoriesTags, intentar enriquecer desde la BD local
+	if code != "" && categoriesTags == "" {
+		if prod, err := s.storage.GetCommercialProductByCode(code); err == nil && prod != nil {
+			if prod.CategoriesTags != "" {
+				categoriesTags = prod.CategoriesTags
+			}
+			if name == "" && prod.ProductName != "" {
+				name = prod.ProductName
+			}
+		}
+		// Si es un alimento primario BEDCA, obtener su categoría
+		if strings.HasPrefix(code, "primary:") {
+			foodID := strings.TrimPrefix(code, "primary:")
+			if food, err := s.storage.GetByID(foodID); err == nil && food != nil {
+				if primaryCategory == "" {
+					primaryCategory = food.Category
+				}
+				if name == "" {
+					name = food.Name
+				}
+			}
+		}
+	}
+
+	est := shelflife.EstimateShelfLife(code, name, categoriesTags, primaryCategory, time.Now())
+
+	type response struct {
+		Code                string `json:"code,omitempty"`
+		Name                string `json:"name,omitempty"`
+		Days                int    `json:"days"`
+		ShelfClass          string `json:"shelfClass"`
+		Reliability         string `json:"reliability"`
+		RuleApplied         string `json:"ruleApplied"`
+		SuggestedExpiryDate string `json:"suggestedExpiryDate"`
+	}
+
+	s.jsonResponse(w, http.StatusOK, response{
+		Code:                code,
+		Name:                name,
+		Days:                est.Days,
+		ShelfClass:          string(est.ShelfClass),
+		Reliability:         est.Reliability,
+		RuleApplied:         est.RuleApplied,
+		SuggestedExpiryDate: est.SuggestedExpiryDate,
+	})
+}
+
+// handleGetSeasonalCalendar — GET /api/seasonal/calendar
+// Params opcionales: month (1-12), category (vegetable, fruit, fish), availability (peak, available)
+func (s *Server) handleGetSeasonalCalendar(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	weekStr := q.Get("week")
+	monthStr := q.Get("month")
+	category := q.Get("category")
+	availability := q.Get("availability")
+
+	month := 0
+	week := 0
+	if weekStr != "" {
+		if wNum, err := strconv.Atoi(weekStr); err == nil && wNum >= 1 && wNum <= 53 {
+			week = wNum
+			// Aproximación de mes según semana (4.33 semanas/mes)
+			approxMonth := int(float64(wNum-1)/4.33) + 1
+			if approxMonth > 12 {
+				approxMonth = 12
+			}
+			month = approxMonth
+		}
+	} else if monthStr != "" {
+		if m, err := strconv.Atoi(monthStr); err == nil && m >= 1 && m <= 12 {
+			month = m
+		}
+	}
+
+	filter := model.SeasonalCalendarFilter{
+		Month:        month,
+		Category:     category,
+		Availability: availability,
+	}
+
+	items, err := s.storage.GetSeasonalCalendar(filter)
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error consultando calendario de estacionalidad: "+err.Error())
+		return
+	}
+
+	s.jsonResponse(w, http.StatusOK, map[string]interface{}{
+		"total": len(items),
+		"month": month,
+		"week":  week,
+		"items": items,
+	})
+}
+
+// handleGenerateWeeklyMenu — GET /api/menu/generate
+// Params: week (1-52), year (ej: 2026/2027), prioritize_pantry (true/false)
+func (s *Server) handleGenerateWeeklyMenu(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	weekStr := q.Get("week")
+	yearStr := q.Get("year")
+	prioritizePantry := q.Get("prioritize_pantry") == "true" || q.Get("pantry") == "true"
+	fuelSavingMode := q.Get("fuel_saving") == "true" || q.Get("energy_saving") == "true"
+
+	week := 0
+	if weekStr != "" {
+		if wNum, err := strconv.Atoi(weekStr); err == nil && wNum >= 1 && wNum <= 53 {
+			week = wNum
+		}
+	}
+	if week == 0 {
+		_, currentWeek := time.Now().ISOWeek()
+		week = currentWeek
+	}
+
+	year := time.Now().Year()
+	if yearStr != "" {
+		if yNum, err := strconv.Atoi(yearStr); err == nil && yNum > 2000 {
+			year = yNum
+		}
+	}
+
+	// 1. Obtener recetas
+	recipes, err := s.storage.GetAllRecipes()
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error obteniendo recetas: "+err.Error())
+		return
+	}
+	if len(recipes) == 0 {
+		s.errorResponse(w, http.StatusNotFound, "No hay recetas disponibles en la base de datos para planificar")
+		return
+	}
+
+	// 2. Obtener despensa del usuario
+	pantry, _ := s.storage.GetPantryItems()
+
+	// 3. Obtener alimentos de temporada para la semana
+	approxMonth := int(float64(week-1)/4.33) + 1
+	if approxMonth > 12 {
+		approxMonth = 12
+	}
+	seasonalItems, _ := s.storage.GetSeasonalCalendar(model.SeasonalCalendarFilter{
+		Month: approxMonth,
+	})
+
+	opts := model.MenuGenerationOptions{
+		Year:             year,
+		Week:             week,
+		PrioritizePantry: prioritizePantry,
+		FuelSavingMode:   fuelSavingMode,
+		TargetLegumeDays: 3,
+		TargetFishDays:   3,
+	}
+
+	plan, err := s.planner.GenerateWeeklyPlan(recipes, pantry, seasonalItems, opts)
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error generando menú semanal: "+err.Error())
+		return
+	}
+
+	s.jsonResponse(w, http.StatusOK, plan)
+}
+
+// handlePostGenerateWeeklyMenu — POST /api/menu/generate con opciones ad-hoc
+func (s *Server) handlePostGenerateWeeklyMenu(w http.ResponseWriter, r *http.Request) {
+	type menuReq struct {
+		Week             int                `json:"week"`
+		Year             int                `json:"year"`
+		PrioritizePantry bool               `json:"prioritizePantry"`
+		TargetLegumeDays int                `json:"targetLegumeDays"`
+		TargetFishDays   int                `json:"targetFishDays"`
+		CustomRecipes    []model.Recipe     `json:"recipes,omitempty"`
+		CustomPantry     []model.PantryItem `json:"pantry,omitempty"`
+	}
+
+	var req menuReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.errorResponse(w, http.StatusBadRequest, "JSON inválido: "+err.Error())
+		return
+	}
+
+	recipes := req.CustomRecipes
+	if len(recipes) == 0 {
+		var err error
+		recipes, err = s.storage.GetAllRecipes()
+		if err != nil {
+			s.errorResponse(w, http.StatusInternalServerError, "Error obteniendo recetas: "+err.Error())
+			return
+		}
+	}
+
+	pantry := req.CustomPantry
+	if len(pantry) == 0 {
+		pantry, _ = s.storage.GetPantryItems()
+	}
+
+	week := req.Week
+	if week == 0 {
+		_, currentWeek := time.Now().ISOWeek()
+		week = currentWeek
+	}
+	year := req.Year
+	if year == 0 {
+		year = time.Now().Year()
+	}
+
+	approxMonth := int(float64(week-1)/4.33) + 1
+	if approxMonth > 12 {
+		approxMonth = 12
+	}
+	seasonalItems, _ := s.storage.GetSeasonalCalendar(model.SeasonalCalendarFilter{
+		Month: approxMonth,
+	})
+
+	opts := model.MenuGenerationOptions{
+		Year:             year,
+		Week:             week,
+		PrioritizePantry: req.PrioritizePantry,
+		TargetLegumeDays: req.TargetLegumeDays,
+		TargetFishDays:   req.TargetFishDays,
+	}
+
+	plan, err := s.planner.GenerateWeeklyPlan(recipes, pantry, seasonalItems, opts)
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error generando menú semanal: "+err.Error())
+		return
+	}
+
+	s.jsonResponse(w, http.StatusOK, plan)
+}
+
+// handleGetCookingEnergyProfiles — GET /api/cooking/energy-profiles
+// Params opcionales: class (zero, minimal, medium, high)
+func (s *Server) handleGetCookingEnergyProfiles(w http.ResponseWriter, r *http.Request) {
+	energyClass := r.URL.Query().Get("class")
+
+	profiles, err := s.storage.GetCookingProfiles(energyClass)
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error obteniendo perfiles de gasto energético: "+err.Error())
+		return
+	}
+
+	s.jsonResponse(w, http.StatusOK, map[string]interface{}{
+		"total":    len(profiles),
+		"filter":   energyClass,
+		"profiles": profiles,
+	})
+}
+
+// handleImportSeasonal — POST /api/seasonal/import
+// Body JSON: {"url": "https://..."} o {"path": "..."} o array directo de items
+func (s *Server) handleImportSeasonal(w http.ResponseWriter, r *http.Request) {
+	type importReq struct {
+		URL   string               `json:"url"`
+		Path  string               `json:"path"`
+		Items []model.SeasonalItem `json:"items"`
+	}
+
+	var req importReq
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.errorResponse(w, http.StatusBadRequest, "Error leyendo cuerpo de solicitud: "+err.Error())
+		return
+	}
+
+	var items []model.SeasonalItem
+	if err := json.Unmarshal(data, &req); err == nil && (req.URL != "" || req.Path != "" || len(req.Items) > 0) {
+		if req.URL != "" {
+			items, err = importer.ImportSeasonalFromSource(req.URL)
+		} else if req.Path != "" {
+			items, err = importer.ImportSeasonalFromSource(req.Path)
+		} else {
+			items = req.Items
+		}
+	} else {
+		// Intentar parsear el body directo
+		items, err = importer.ImportSeasonalFromSource("")
+		if err != nil {
+			// Intentar unmarshal directo
+			if errDirect := json.Unmarshal(data, &items); errDirect != nil {
+				s.errorResponse(w, http.StatusBadRequest, "Formato JSON no válido para importación estacional")
+				return
+			}
+		}
+	}
+
+	if err != nil {
+		s.errorResponse(w, http.StatusBadRequest, "Error procesando fuente estacional: "+err.Error())
+		return
+	}
+
+	imported := 0
+	for _, it := range items {
+		if err := s.storage.UpsertSeasonalItem(it); err == nil {
+			imported++
+		}
+	}
+
+	s.jsonResponse(w, http.StatusOK, map[string]interface{}{
+		"status":   "ok",
+		"imported": imported,
+		"total":    len(items),
+	})
+}
+
+// handleImportCookingProfiles — POST /api/cooking/import
+// Body JSON: {"url": "https://..."} o {"path": "..."} o array directo de perfiles
+func (s *Server) handleImportCookingProfiles(w http.ResponseWriter, r *http.Request) {
+	type importReq struct {
+		URL      string                     `json:"url"`
+		Path     string                     `json:"path"`
+		Profiles []model.FoodCookingProfile `json:"profiles"`
+	}
+
+	var req importReq
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		s.errorResponse(w, http.StatusBadRequest, "Error leyendo cuerpo de solicitud: "+err.Error())
+		return
+	}
+
+	var profiles []model.FoodCookingProfile
+	if err := json.Unmarshal(data, &req); err == nil && (req.URL != "" || req.Path != "" || len(req.Profiles) > 0) {
+		if req.URL != "" {
+			profiles, err = importer.ImportCookingProfilesFromSource(req.URL)
+		} else if req.Path != "" {
+			profiles, err = importer.ImportCookingProfilesFromSource(req.Path)
+		} else {
+			profiles = req.Profiles
+		}
+	} else {
+		if errDirect := json.Unmarshal(data, &profiles); errDirect != nil {
+			s.errorResponse(w, http.StatusBadRequest, "Formato JSON no válido para perfiles de cocción")
+			return
+		}
+	}
+
+	if err != nil {
+		s.errorResponse(w, http.StatusBadRequest, "Error procesando fuente de cocción: "+err.Error())
+		return
+	}
+
+	imported := 0
+	for _, p := range profiles {
+		if err := s.storage.UpsertCookingProfile(p); err == nil {
+			imported++
+		}
+	}
+
+	s.jsonResponse(w, http.StatusOK, map[string]interface{}{
+		"status":   "ok",
+		"imported": imported,
+		"total":    len(profiles),
+	})
+}
+
+// handleGenerateAnnualMenu — GET /api/menu/annual
+// Params: year (2026/2027), min_days (default 10), fuel_saving (true/false)
+func (s *Server) handleGenerateAnnualMenu(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	yearStr := q.Get("year")
+	minDaysStr := q.Get("min_days")
+	fuelSaving := q.Get("fuel_saving") == "true" || q.Get("energy_saving") == "true"
+
+	year := time.Now().Year()
+	if yearStr != "" {
+		if y, err := strconv.Atoi(yearStr); err == nil && y > 2000 {
+			year = y
+		}
+	}
+
+	minDays := 10
+	if minDaysStr != "" {
+		if d, err := strconv.Atoi(minDaysStr); err == nil && d > 0 {
+			minDays = d
+		}
+	}
+
+	recipes, err := s.storage.GetAllRecipes()
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error obteniendo recetas: "+err.Error())
+		return
+	}
+	if len(recipes) == 0 {
+		s.errorResponse(w, http.StatusNotFound, "No hay recetas disponibles en la base de datos para planificar")
+		return
+	}
+
+	pantry, _ := s.storage.GetPantryItems()
+	seasonalItems, _ := s.storage.GetSeasonalCalendar(model.SeasonalCalendarFilter{})
+
+	opts := model.AnnualPlanOptions{
+		Year:                  year,
+		MinDaysBetweenRepeats: minDays,
+		FuelSavingMode:        fuelSaving,
+		TargetLegumeDays:      3,
+		TargetFishDays:        3,
+	}
+
+	annualPlan, err := s.planner.GenerateAnnualPlan(recipes, pantry, seasonalItems, opts)
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error generando menú anual: "+err.Error())
+		return
+	}
+
+	s.jsonResponse(w, http.StatusOK, annualPlan)
+}
+
+// handleExportAnnualMenu — GET /api/menu/annual/export
+// Devuelve el formato BuscaturecetaPackage con las 52 semanas listo para importar en Buscatureceta/NutriAgenda
+func (s *Server) handleExportAnnualMenu(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	yearStr := q.Get("year")
+	minDaysStr := q.Get("min_days")
+	fuelSaving := q.Get("fuel_saving") == "true" || q.Get("energy_saving") == "true"
+
+	year := time.Now().Year()
+	if yearStr != "" {
+		if y, err := strconv.Atoi(yearStr); err == nil && y > 2000 {
+			year = y
+		}
+	}
+
+	minDays := 10
+	if minDaysStr != "" {
+		if d, err := strconv.Atoi(minDaysStr); err == nil && d > 0 {
+			minDays = d
+		}
+	}
+
+	recipes, err := s.storage.GetAllRecipes()
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error obteniendo recetas: "+err.Error())
+		return
+	}
+	if len(recipes) == 0 {
+		s.errorResponse(w, http.StatusNotFound, "No hay recetas disponibles para planificar")
+		return
+	}
+
+	pantry, _ := s.storage.GetPantryItems()
+	seasonalItems, _ := s.storage.GetSeasonalCalendar(model.SeasonalCalendarFilter{})
+
+	opts := model.AnnualPlanOptions{
+		Year:                  year,
+		MinDaysBetweenRepeats: minDays,
+		FuelSavingMode:        fuelSaving,
+		TargetLegumeDays:      3,
+		TargetFishDays:        3,
+	}
+
+	annualPlan, err := s.planner.GenerateAnnualPlan(recipes, pantry, seasonalItems, opts)
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error generando plan anual: "+err.Error())
+		return
+	}
+
+	buscaturecetaPkg := planner.ExportAnnualPlanToBuscatureceta(annualPlan)
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"plan_anual_%d_buscatureceta.json\"", year))
+	s.jsonResponse(w, http.StatusOK, buscaturecetaPkg)
+}
 
 

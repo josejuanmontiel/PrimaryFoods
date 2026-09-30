@@ -1,0 +1,302 @@
+[
+  {
+    "primaryFoodId": "conservas_legumbre",
+    "foodName": "Legumbres cocidas en conserva (tarro/lata)",
+    "category": "legume",
+    "defaultEnergyClass": "zero",
+    "defaultFireMinutes": 0,
+    "efficiencyTips": [
+      "Comer directamente escurridas en ensalada (0 min de fuego)",
+      "Si se calientan con sofrito, anadir en el ultimo minuto para no gastar gas"
+    ]
+  },
+  {
+    "primaryFoodId": "conservas_pescado",
+    "foodName": "Pescado en conserva (atun, sardinas, caballa, mejillones)",
+    "category": "fish",
+    "defaultEnergyClass": "zero",
+    "defaultFireMinutes": 0,
+    "efficiencyTips": [
+      "Listo para consumir directamente del envase",
+      "El propio aceite de la lata sirve como grasa saludable para alinar sin encender fuego"
+    ]
+  },
+  {
+    "primaryFoodId": "frutos_secos",
+    "foodName": "Frutos secos y semillas (nueces, almendras, chia, lino)",
+    "category": "nut",
+    "defaultEnergyClass": "zero",
+    "defaultFireMinutes": 0,
+    "efficiencyTips": [
+      "Aporte masivo de calorias, proteinas y grasas saludables sin gasto de combustible",
+      "Consumir crudos o integrados en cualquier ensalada o papilla fria"
+    ]
+  },
+  {
+    "primaryFoodId": "ensalada",
+    "foodName": "Ensaladas crudas y alinadas",
+    "category": "vegetable",
+    "defaultEnergyClass": "zero",
+    "defaultFireMinutes": 0,
+    "efficiencyTips": [
+      "Sin fuego en absoluto: solo lavar, cortar y alinar",
+      "Anadir proteina (huevo cocido con tecnica pasiva, conservas) para hacerlas completas"
+    ]
+  },
+  {
+    "primaryFoodId": "hummus",
+    "foodName": "Hummus (con conserva de garbanzos)",
+    "category": "legume",
+    "defaultEnergyClass": "zero",
+    "defaultFireMinutes": 0,
+    "efficiencyTips": [
+      "Si se usa conserva de garbanzos: 0 fuego, solo batidora",
+      "Anadir zumo de limon fresco y aceite de oliva para potenciar nutrientes sin cocinar"
+    ]
+  },
+  {
+    "primaryFoodId": "yogur",
+    "foodName": "Yogur y lacteos fermentados",
+    "category": "dairy",
+    "defaultEnergyClass": "zero",
+    "defaultFireMinutes": 0,
+    "efficiencyTips": [
+      "Consumo directo sin preparacion",
+      "Combinar con frutas frescas de temporada y frutos secos para comida completa sin fuego"
+    ]
+  },
+  {
+    "primaryFoodId": "pan_y_crackers",
+    "foodName": "Pan (pita, crackers, wasa, pan de molde)",
+    "category": "cereal",
+    "defaultEnergyClass": "zero",
+    "defaultFireMinutes": 0,
+    "efficiencyTips": [
+      "Consume sin calentar o tuestalo con el calor residual de la tapa",
+      "Combina con conservas, queso, aguacate o hummus para bocadillo nutritivo completo"
+    ]
+  },
+  {
+    "primaryFoodId": "cuscus",
+    "foodName": "Cuscus (semola de trigo precocida)",
+    "category": "cereal",
+    "defaultEnergyClass": "minimal",
+    "defaultFireMinutes": 1,
+    "zeroFuelAlternative": "pan de pita o copos de avena en remojo",
+    "efficiencyTips": [
+      "Hervir 1 medida de agua, apagar inmediatamente el fuego, verter 1 medida de cuscus, tapar y reposar 5 min (gasto de gas casi nulo)",
+      "No requiere escurrido: absorbe el agua exacta sin perder energia"
+    ],
+    "methods": [
+      {
+        "method": "retention_steep",
+        "activeFireMinutes": 1,
+        "passiveWaitMinutes": 5,
+        "energyClass": "minimal",
+        "tip": "Hervir agua, apagar llama, tapar y reposar 5 minutos"
+      }
+    ]
+  },
+  {
+    "primaryFoodId": "pure_patatas_copos",
+    "foodName": "Pure de patatas en copos deshidratado",
+    "category": "vegetable",
+    "defaultEnergyClass": "minimal",
+    "defaultFireMinutes": 1,
+    "efficiencyTips": [
+      "Solo requiere calentar el agua/leche hasta el primer hervor, apagar y mezclar los copos con cuchara"
+    ]
+  },
+  {
+    "primaryFoodId": "avena_copos",
+    "foodName": "Copos de avena suaves",
+    "category": "cereal",
+    "defaultEnergyClass": "minimal",
+    "defaultFireMinutes": 0,
+    "efficiencyTips": [
+      "Tecnica Overnight Oats: dejar en remojo frio (agua o leche) toda la noche; no requiere ni un segundo de fuego",
+      "Si se hace caliente (porridge), basta 1-2 minutos de hervor suave"
+    ]
+  },
+  {
+    "primaryFoodId": "fideos_arroz",
+    "foodName": "Fideos de arroz finos (vermicelli)",
+    "category": "cereal",
+    "defaultEnergyClass": "minimal",
+    "defaultFireMinutes": 1,
+    "efficiencyTips": [
+      "Hervir agua, apagar el fuego y sumergir los fideos tapados durante 3-4 minutos. No hervir a fuego vivo"
+    ]
+  },
+  {
+    "primaryFoodId": "huevos",
+    "foodName": "Huevos",
+    "category": "protein",
+    "defaultEnergyClass": "minimal",
+    "defaultFireMinutes": 2,
+    "efficiencyTips": [
+      "Tecnica pasiva: llevar el agua a hervor con los huevos dentro, apagar fuego inmediatamente, tapar y esperar 10 min para huevo duro perfecto.",
+      "Revuelto rapido en sarten: 2-3 min a fuego vivo con tapa"
+    ]
+  },
+  {
+    "primaryFoodId": "sopas_sobre",
+    "foodName": "Sopas y cremas de sobre / deshidratadas",
+    "category": "cereal",
+    "defaultEnergyClass": "minimal",
+    "defaultFireMinutes": 2,
+    "efficiencyTips": [
+      "Solo requieren agua caliente; usar agua sobrante de otra coccion para aprovechar calor residual"
+    ]
+  },
+  {
+    "primaryFoodId": "tortilla_maiz",
+    "foodName": "Tortillas de maiz / wraps",
+    "category": "cereal",
+    "defaultEnergyClass": "minimal",
+    "defaultFireMinutes": 1,
+    "efficiencyTips": [
+      "Calentar 30 segundos cada cara en sarten seca o directamente sobre la llama",
+      "Envolver en papel de aluminio para mantener calientes sin fuego adicional"
+    ]
+  },
+  {
+    "primaryFoodId": "pasta_seca",
+    "foodName": "Pasta seca (fideos, espaguetis, macarrones)",
+    "category": "cereal",
+    "defaultEnergyClass": "medium",
+    "defaultFireMinutes": 8,
+    "zeroFuelAlternative": "fideos de arroz finos o cuscus",
+    "efficiencyTips": [
+      "Metodo de coccion pasiva: hervir 2 minutos con tapa, apagar la llama por completo y dejar tapado el tiempo nominal del paquete. Ahorra 75% de gas",
+      "Cocinar siempre con la tapa bien encajada para retener el vapor"
+    ],
+    "methods": [
+      {
+        "method": "passive_cooking",
+        "activeFireMinutes": 2,
+        "passiveWaitMinutes": 10,
+        "energyClass": "minimal",
+        "tip": "Hervir 2 min con tapa, apagar fuego y dejar reposar 10 min tapado"
+      }
+    ]
+  },
+  {
+    "primaryFoodId": "arroz_blanco",
+    "foodName": "Arroz blanco / vaporizado",
+    "category": "cereal",
+    "defaultEnergyClass": "medium",
+    "defaultFireMinutes": 12,
+    "zeroFuelAlternative": "cuscus",
+    "efficiencyTips": [
+      "Remojo previo de 30 min reduce el tiempo de fuego de 15 a 6-8 minutos",
+      "El arroz vaporizado resiste mejor la coccion pasiva sin pasarse"
+    ]
+  },
+  {
+    "primaryFoodId": "lentejas_rojas",
+    "foodName": "Lenteja roja pelada",
+    "category": "legume",
+    "defaultEnergyClass": "medium",
+    "defaultFireMinutes": 10,
+    "zeroFuelAlternative": "lentejas cocidas en bote de cristal",
+    "efficiencyTips": [
+      "Al no tener piel (hollejo), cuece en solo 10-12 min frente a los 40-50 min de las lentejas comunes",
+      "Ideal para espesar cremas y pures calientes con minimo consumo"
+    ]
+  },
+  {
+    "primaryFoodId": "pescado_fresco",
+    "foodName": "Pescado fresco a la plancha / vapor",
+    "category": "fish",
+    "defaultEnergyClass": "medium",
+    "defaultFireMinutes": 8,
+    "zeroFuelAlternative": "conserva de atun o sardinas",
+    "efficiencyTips": [
+      "Coccion al vapor con tapa: 5-8 min maximo para lomos de 1-2 cm de grosor",
+      "La plancha caliente primero y apagada mantiene el calor para terminar la coccion sin mas gas"
+    ]
+  },
+  {
+    "primaryFoodId": "pollo_pechuga",
+    "foodName": "Pechuga de pollo / pavo",
+    "category": "meat",
+    "defaultEnergyClass": "medium",
+    "defaultFireMinutes": 12,
+    "efficiencyTips": [
+      "Filetear fino (1 cm) reduce el tiempo de plancha de 15 a 4-5 min",
+      "Marinar previamente con zumo de limon ablanda la fibra y permite menor temperatura"
+    ]
+  },
+  {
+    "primaryFoodId": "verduras_salteadas",
+    "foodName": "Verduras salteadas y sofritos",
+    "category": "vegetable",
+    "defaultEnergyClass": "medium",
+    "defaultFireMinutes": 10,
+    "efficiencyTips": [
+      "Cortar en trozos pequenos uniformes para cocer antes",
+      "Saltear a fuego alto poco tiempo es mas eficiente que estofar a fuego lento"
+    ]
+  },
+  {
+    "primaryFoodId": "sopa_caldo",
+    "foodName": "Caldo y sopas caseras",
+    "category": "other",
+    "defaultEnergyClass": "medium",
+    "defaultFireMinutes": 20,
+    "efficiencyTips": [
+      "Hacer caldo concentrado (doble cantidad de solidos) y diluir con agua fria al servir: el caldo cunde el doble",
+      "Usar las sobras de coccion como base de caldo nutritivo sin coste de gas extra"
+    ]
+  },
+  {
+    "primaryFoodId": "legumbres_secas_crudas",
+    "foodName": "Legumbres secas (garbanzos, alubias, lentejas pardinas)",
+    "category": "legume",
+    "defaultEnergyClass": "high",
+    "defaultFireMinutes": 45,
+    "zeroFuelAlternative": "legumbres cocidas en conserva (0 min de fuego)",
+    "efficiencyTips": [
+      "Remojo de 12-24 horas es IMPRESCINDIBLE para reducir tiempo a la mitad",
+      "Usar olla a presion reduce el tiempo de 60 a 15-20 minutos",
+      "En situacion de racionamiento de gas, EVITAR cocinar legumbres secas y priorizar botes de conserva"
+    ]
+  },
+  {
+    "primaryFoodId": "arroz_integral",
+    "foodName": "Arroz integral / trigo en grano",
+    "category": "cereal",
+    "defaultEnergyClass": "high",
+    "defaultFireMinutes": 40,
+    "zeroFuelAlternative": "arroz blanco vaporizado o cuscus",
+    "efficiencyTips": [
+      "Muy ineficiente en combustible sin remojo largo o sin olla rapida",
+      "Sustituir por cuscus (1 min fuego) o arroz vaporizado (12 min) en modo supervivencia"
+    ]
+  },
+  {
+    "primaryFoodId": "estofado_guiso",
+    "foodName": "Estofados, guisos y potajes",
+    "category": "other",
+    "defaultEnergyClass": "high",
+    "defaultFireMinutes": 60,
+    "zeroFuelAlternative": "conservas de platos preparados (cocido, fabada)",
+    "efficiencyTips": [
+      "Usar conservas de platos preparados de calidad: 0 min de fuego vs 60-90 min de guiso",
+      "Si se cocina, preparar grandes cantidades (6-8 raciones) y conservar: amortiza el alto gasto inicial de gas"
+    ]
+  },
+  {
+    "primaryFoodId": "carne_roja_guisada",
+    "foodName": "Carne roja (ternera, cerdo, cordero) guisada",
+    "category": "meat",
+    "defaultEnergyClass": "high",
+    "defaultFireMinutes": 90,
+    "zeroFuelAlternative": "conservas de carne preparada (pate, lata de atun)",
+    "efficiencyTips": [
+      "Evitar en modo supervivencia por altisimo coste energetico",
+      "Si se cocina, usar olla rapida (15-20 min) vs guiso convencional (90 min)"
+    ]
+  }
+]

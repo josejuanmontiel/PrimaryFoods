@@ -8,6 +8,10 @@ type PantryItem struct {
 	Amount      float64 `json:"amount"`
 	Unit        string  `json:"unit"`
 	PantryZone  string  `json:"pantryZone"` // "food", "non_food", etc.
+	ExpiryDate  *string `json:"expiryDate,omitempty"`
+	OpenedAt    *string `json:"openedAt,omitempty"`
+	IsEstimated bool    `json:"isEstimated,omitempty"`
+	ShelfClass  string  `json:"shelfClass,omitempty"` // "long", "medium", "short"
 }
 
 // DiaryItem representa un plato dentro de una comida del diario
