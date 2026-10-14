@@ -19,6 +19,7 @@ import (
 	"github.com/josejuanmontiel/primaryfoods/internal/mealie"
 	"github.com/josejuanmontiel/primaryfoods/internal/model"
 	"github.com/josejuanmontiel/primaryfoods/internal/planner"
+	"github.com/josejuanmontiel/primaryfoods/internal/pruner"
 	"github.com/josejuanmontiel/primaryfoods/internal/shelflife"
 	"github.com/josejuanmontiel/primaryfoods/internal/storage"
 )
@@ -125,6 +126,10 @@ func (s *Server) routes() {
 
 	// Exportación Enriquecida para Buscatureceta
 	s.mux.HandleFunc("GET /api/export/buscatureceta", s.handleExportBuscatureceta)
+
+	// Inspección y Poda de Backups de NutriAgenda (Épica 6)
+	s.mux.HandleFunc("POST /api/backup/inspect", s.handleInspectBackup)
+	s.mux.HandleFunc("POST /api/backup/prune", s.handlePruneBackup)
 
 	// Documentación OpenAPI 3.1
 	s.mux.HandleFunc("GET /api/openapi.yaml", s.handleOpenAPIYAML)
@@ -1834,6 +1839,109 @@ func (s *Server) handleExportAnnualMenu(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"plan_anual_%d_buscatureceta.json\"", year))
 	s.jsonResponse(w, http.StatusOK, buscaturecetaPkg)
+}
+
+// handleInspectBackup — POST /api/backup/inspect
+// Inspecciona un archivo de backup (vía cuerpo raw o multipart) y reporta pesos, tablas y blobs
+func (s *Server) handleInspectBackup(w http.ResponseWriter, r *http.Request) {
+	var raw []byte
+	var err error
+
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		file, _, errForm := r.FormFile("file")
+		if errForm != nil {
+			s.errorResponse(w, http.StatusBadRequest, "Error leyendo archivo 'file': "+errForm.Error())
+			return
+		}
+		defer file.Close()
+		raw, err = io.ReadAll(file)
+	} else {
+		raw, err = io.ReadAll(r.Body)
+	}
+
+	if err != nil || len(raw) == 0 {
+		s.errorResponse(w, http.StatusBadRequest, "Cuerpo de petición vacío o inválido")
+		return
+	}
+
+	report, err := pruner.InspectBackup(raw)
+	if err != nil {
+		s.errorResponse(w, http.StatusBadRequest, "Error inspeccionando backup: "+err.Error())
+		return
+	}
+
+	s.jsonResponse(w, http.StatusOK, report)
+}
+
+// handlePruneBackup — POST /api/backup/prune
+// Aplica reglas de poda y saneamiento y devuelve el resultado estadístico o el archivo podado
+func (s *Server) handlePruneBackup(w http.ResponseWriter, r *http.Request) {
+	var raw []byte
+	var opts model.PruneOptions
+	download := r.URL.Query().Get("download") == "true"
+
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		file, header, errForm := r.FormFile("file")
+		if errForm != nil {
+			s.errorResponse(w, http.StatusBadRequest, "Error leyendo archivo 'file': "+errForm.Error())
+			return
+		}
+		defer file.Close()
+		raw, _ = io.ReadAll(file)
+
+		optsJSON := r.FormValue("options")
+		if optsJSON != "" {
+			_ = json.Unmarshal([]byte(optsJSON), &opts)
+		} else {
+			// Leer opciones directas de form
+			opts.PurgeRecentProducts = r.FormValue("purge_recent") == "true"
+			opts.PurgeZeroStockPantry = r.FormValue("purge_zero_stock") == "true"
+			opts.PurgeCompletedUploads = r.FormValue("purge_uploads") == "true"
+			opts.StripTicketImages = r.FormValue("strip_tickets") == "true"
+			opts.StripMealPhotos = r.FormValue("strip_meal_photos") == "true"
+			opts.StripRecipePhotos = r.FormValue("strip_recipe_photos") == "true"
+		}
+		_ = header
+	} else {
+		// Estructura JSON con { backup: {...}, options: {...} }
+		var payload struct {
+			Backup  map[string]interface{} `json:"backup"`
+			Options model.PruneOptions     `json:"options"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			s.errorResponse(w, http.StatusBadRequest, "Error decodificando payload JSON: "+err.Error())
+			return
+		}
+		opts = payload.Options
+		raw, _ = json.Marshal(payload.Backup)
+	}
+
+	if len(raw) == 0 {
+		s.errorResponse(w, http.StatusBadRequest, "Backup no proporcionado")
+		return
+	}
+
+	res, prunedBytes, err := pruner.PruneBackup(raw, opts)
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error podando backup: "+err.Error())
+		return
+	}
+
+	if download {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Disposition", "attachment; filename=\"nutriagenda_backup_podado.json\"")
+		w.WriteHeader(http.StatusOK)
+		w.Write(prunedBytes)
+		return
+	}
+
+	var parsedPruned map[string]interface{}
+	_ = json.Unmarshal(prunedBytes, &parsedPruned)
+
+	s.jsonResponse(w, http.StatusOK, map[string]interface{}{
+		"result":       res,
+		"prunedBackup": parsedPruned,
+	})
 }
 
 

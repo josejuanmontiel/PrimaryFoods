@@ -593,3 +593,100 @@ func TestMealieDiffAndImport(t *testing.T) {
 }
 
 
+
+func TestBackupInspectAndPruneEndpoints(t *testing.T) {
+	srv := setupTestServer(t)
+
+	backupPayload := []byte(`{
+		"version": 1,
+		"timestamp": "2026-10-14T12:00:00Z",
+		"data": {
+			"recipes": [
+				{"id": 10, "name": "Tortilla de Patatas", "photoBlobBase64": "SGVsbG8gV29ybGQ="}
+			],
+			"pantry": [
+				{"productCode": "P_ZERO", "amount": 0},
+				{"productCode": "P_OK", "amount": 2}
+			],
+			"recentProducts": [
+				{"code": "P_REC1"},
+				{"code": "P_REC2"}
+			]
+		}
+	}`)
+
+	// 1. Probar POST /api/backup/inspect
+	reqInspect := httptest.NewRequest("POST", "/api/backup/inspect", strings.NewReader(string(backupPayload)))
+	reqInspect.Header.Set("Content-Type", "application/json")
+	recInspect := httptest.NewRecorder()
+
+	srv.Handler().ServeHTTP(recInspect, reqInspect)
+
+	if recInspect.Code != http.StatusOK {
+		t.Fatalf("POST /api/backup/inspect esperaba 200, obtenido %d", recInspect.Code)
+	}
+
+	var inspectReport model.BackupInspectionReport
+	if err := json.Unmarshal(recInspect.Body.Bytes(), &inspectReport); err != nil {
+		t.Fatalf("Error parseando respuesta de inspect: %v", err)
+	}
+
+	if inspectReport.TotalRecords != 5 {
+		t.Errorf("Esperaba 5 registros totales, obtenido %d", inspectReport.TotalRecords)
+	}
+	if inspectReport.Tables["recipes"].Count != 1 {
+		t.Errorf("Esperaba 1 receta, obtenido %d", inspectReport.Tables["recipes"].Count)
+	}
+
+	// 2. Probar POST /api/backup/prune
+	pruneReqBody := map[string]interface{}{
+		"backup": map[string]interface{}{
+			"version":   1,
+			"timestamp": "2026-10-14T12:00:00Z",
+			"data": map[string]interface{}{
+				"recipes": []interface{}{
+					map[string]interface{}{"id": 10, "name": "Tortilla de Patatas", "photoBlobBase64": "SGVsbG8gV29ybGQ="},
+				},
+				"pantry": []interface{}{
+					map[string]interface{}{"productCode": "P_ZERO", "amount": 0.0},
+					map[string]interface{}{"productCode": "P_OK", "amount": 2.0},
+				},
+				"recentProducts": []interface{}{
+					map[string]interface{}{"code": "P_REC1"},
+					map[string]interface{}{"code": "P_REC2"},
+				},
+			},
+		},
+		"options": model.PruneOptions{
+			PurgeRecentProducts:  true,
+			PurgeZeroStockPantry: true,
+			StripRecipePhotos:    true,
+		},
+	}
+
+	pruneJSON, _ := json.Marshal(pruneReqBody)
+	reqPrune := httptest.NewRequest("POST", "/api/backup/prune", strings.NewReader(string(pruneJSON)))
+	reqPrune.Header.Set("Content-Type", "application/json")
+	recPrune := httptest.NewRecorder()
+
+	srv.Handler().ServeHTTP(recPrune, reqPrune)
+
+	if recPrune.Code != http.StatusOK {
+		t.Fatalf("POST /api/backup/prune esperaba 200, obtenido %d", recPrune.Code)
+	}
+
+	var pruneResponse struct {
+		Result model.PruneResult `json:"result"`
+	}
+	if err := json.Unmarshal(recPrune.Body.Bytes(), &pruneResponse); err != nil {
+		t.Fatalf("Error parseando respuesta de prune: %v", err)
+	}
+
+	if pruneResponse.Result.RemovedByTable["recentProducts"] != 2 {
+		t.Errorf("Esperaba 2 recentProducts eliminados, obtenido %d", pruneResponse.Result.RemovedByTable["recentProducts"])
+	}
+	if pruneResponse.Result.RemovedByTable["pantry"] != 1 {
+		t.Errorf("Esperaba 1 pantry eliminado por stock 0, obtenido %d", pruneResponse.Result.RemovedByTable["pantry"])
+	}
+}
+

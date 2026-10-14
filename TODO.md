@@ -111,10 +111,11 @@ PrimaryFoods evoluciona para convertirse en el **cerebro nutricional, analizador
   - [x] Modal global en la UI `🛒 Faltantes y Pack Buscatureceta` con copia de lista de compra y descarga del `.json`.
   - [x] Especificación OpenAPI 3.1.0 completa (`/api/openapi.yaml`, `/api/openapi.json`) y visor interactivo `/docs` (Scalar UI).
   - [x] Web SPA analítica unificada con 6 pestañas interactivas (Analizador Recetas, Buscador Base OFF, Deconstructor Legal UE 1169/2011, Despensa ➔ Receta, Exportador Buscatureceta, OpenAPI 3.1).
-- [ ] **Importador Aditivo en Buscatureceta (Próxima Sesión)**:
-  - [ ] Implementar `importMenuPlanPackage(json)` en Buscatureceta para realizar una importación aditiva/merge (sin limpiar la base de datos).
-  - [ ] Inyectar recetas en `db.recipes`, comidas en `db.diary` y faltantes en `db.cart`.
-  - [ ] Botón en Buscatureceta: *"📥 Importar Plan de Menú / PrimaryFoods"*.
+- [x] **Importador Aditivo en Buscatureceta**:
+  - [x] Implementar `importMenuPlanPackage(json)` en Buscatureceta para realizar una importación aditiva/merge (sin limpiar la base de datos).
+  - [x] Inyectar recetas en `db.recipes`, comidas en `db.diary` y faltantes en `db.cart` o `db.preShoppingList`.
+  - [x] Botón en Buscatureceta en Ajustes y en Agenda: *"📥 Importar Menú"*.
+  - [x] Tests E2E automatizados con Playwright (`tests/menu-import-selective-sync.spec.js`).
 
 ---
 
@@ -134,30 +135,31 @@ PrimaryFoods evoluciona para convertirse en el **cerebro nutricional, analizador
 
 ---
 
-## ✂️ Épica 6: Visualizador & Podador de Backups de NutriAgenda (Curación & Saneamiento)
+## ✂️ Épica 6: Visualizador & Podador de Backups de NutriAgenda (Curación & Saneamiento) (COMPLETADA)
 
 > **Objetivo:** Disponer de una estación visual en PrimaryFoods con interfaz simplificada estilo NutriAgenda para inspeccionar copias de seguridad (`nutriagenda_backup_*.json`), "podar" de forma selectiva o masiva recetas, despensa, diario y compras obsoletas, retocar inventario a gusto y purgar blobs innecesarios, exportando un JSON limpio, íntegro y curado para NutriAgenda.
 
-- [ ] **Arquitectura de Poda en Cascada e Integridad Referencial**:
-  - `recipes` ➔ Purgar automáticamente sus snapshots en `recipeVersions` y advertir si existen referencias vivas en `diary`.
-  - `pantry` ➔ Ofrecer purga sincronizada en `pantryLog` al eliminar un producto.
-  - `diary` ➔ Purgar en cascada sus entradas históricas en `diaryVersions`.
-- [ ] **Doble Modo de Poda en la UI**:
-  - **1. Modo Poda Quirúrgica (Manual por secciones)**:
-    - **🍳 Recetas & Plantillas (`recipes`, `recipeVersions`, `mealTemplates`)**: Grid de tarjetas con ingredientes desplegables y botón `🗑️ Podar`.
-    - **🥫 Despensa e Inventario (`pantry`, `pantryLog`)**: Selector de zona (`food` / `nonfood`), buscador instantáneo, edición ágil inline de cantidades/unidades y botón `❌ Podar`.
-    - **📅 Diario y Objetivos (`diary`, `diaryVersions`, `goals`)**: Línea temporal de comidas para podar días completos o tomas individuales de prueba.
-    - **🛒 Compras y Listas (`shoppingLists`, `cart`, `cartHistory`, `priceHistory`)**: Eliminación de listas archivadas, carritos y tickets antiguos.
-    - **🏷️ Productos Propios & Frecuentes (`customProducts`, `recentProducts`)**: Poda de productos manuales obsoletos y vaciado del historial de escaneos.
-    - **📸 Multimedia y Subidas (`pendingUploads`, `mealPhotos`)**: Purgado de fotos subidas y fotos de platos para aligerar espacio.
-  - **2. Modo Poda Rápida en 1 Clic (Filtros Globales de Saneamiento)**:
-    - `[ 🧹 Vaciar productos recientes / caché ]`
-    - `[ 🧹 Eliminar artículos con stock 0 de despensa ]`
-    - `[ 🧹 Purgar blobs de uploads completados a OFF (-900 KB) ]`
-    - `[ 🧹 Despojar fotos pesadas de tickets archivados conservando metadatos ]`
-- [ ] **Métricas Reactivas y Exportación NutriAgenda**:
-  - Contador reactivo de poda (ej: *"Recetas: 5 ➔ 3 \| Despensa: 51 ➔ 42 \| Tamaño: 1.34 MB ➔ 38 KB"*).
-  - Botón: *"📥 Descargar Backup Podado"* (JSON 100% compatible con el importador de NutriAgenda / Buscatureceta).
+- [x] **Arquitectura de Poda en Cascada e Integridad Referencial**:
+  - [x] `recipes` ➔ Purgar automáticamente sus snapshots en `recipeVersions`.
+  - [x] `pantry` ➔ Purga sincronizada en `pantryLog` al eliminar un producto o purgar artículos con stock 0.
+  - [x] `diary` ➔ Purgar en cascada sus entradas históricas en `diaryVersions`.
+- [x] **Doble Modo de Poda en el Backend y en la UI**:
+  - [x] **1. Modo Poda Quirúrgica (Manual por selecciones)**:
+    - Opciones en `PruneOptions` para eliminar selectivamente recetas, entradas de diario, códigos de despensa, compras archivadas y productos manuales.
+  - [x] **2. Modo Poda Rápida en 1 Clic (Filtros Globales de Saneamiento)**:
+    - [x] `[ 🧹 Vaciar productos recientes / caché ]`
+    - [x] `[ 🧹 Eliminar artículos con stock 0 de despensa ]`
+    - [x] `[ 🧹 Purgar blobs de uploads completados a OFF ]`
+    - [x] `[ 🧹 Despojar fotos pesadas de tickets archivados conservando metadatos ]`
+- [x] **Endpoints API & Módulo Go**:
+  - [x] Paquete `internal/pruner` con `InspectBackup` y `PruneBackup`.
+  - [x] Endpoints `POST /api/backup/inspect` y `POST /api/backup/prune` (soporte JSON directo, multipart y descarga inmediata con query `download=true`).
+  - [x] Tests unitarios en `internal/pruner/pruner_test.go` y tests de integración API en `internal/api/handlers_test.go`.
+- [x] **Métricas Reactivas y Exportación NutriAgenda en la UI**:
+  - [x] Pestaña `✂️ Podador Backups` en el dashboard web.
+  - [x] Contador reactivo de poda (Tamaño original, total registros, blobs pesados y % de ahorro estimado).
+  - [x] Desglose interactivo por tablas con alertas de recomendación.
+  - [x] Botón: *"📥 Descargar Backup Saneado"* (JSON 100% compatible con el importador y fusionador de NutriAgenda / Buscatureceta).
 
 
 ---

@@ -885,6 +885,7 @@
         <button class="nav-tab" onclick="switchTab('tab-mealie-sync', this)">🔄 Sincronizador Mealie</button>
         <button class="nav-tab" onclick="switchTab('tab-export', this)">📦 Exportador Buscatureceta</button>
         <button class="nav-tab" onclick="switchTab('tab-annual', this)">📅 Planificador Anual</button>
+        <button class="nav-tab" onclick="switchTab('tab-pruner', this)">✂️ Podador Backups</button>
         <button class="nav-tab" onclick="switchTab('tab-openapi', this)">📖 OpenAPI 3.1</button>
       </nav>
 
@@ -1300,6 +1301,105 @@
       <div id="annual-calendar-container"></div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- TAB 8: VISUALIZADOR & PODADOR DE BACKUPS   -->
+    <!-- ========================================== -->
+    <div id="tab-pruner" class="view-content">
+      <section class="hero-banner">
+        <div class="hero-text">
+          <h1>✂️ Visualizador & Podador de Backups de NutriAgenda</h1>
+          <p>Inspecciona copias de seguridad de NutriAgenda (<code>nutriagenda_backup_*.json</code>), poda registros obsoletos con integridad referencial en cascada, purga blobs pesados (fotos y tickets archivados) y exporta un backup limpio, íntegro y optimizado.</p>
+        </div>
+      </section>
+
+      <!-- Panel de Carga y Estadísticas -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <h3 style="margin-bottom: 0.75rem;">📥 Cargar Backup para Inspección</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          Arrastra o selecciona tu archivo de copia de seguridad de NutriAgenda o carga el backup de muestra incluido.
+        </p>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <input type="file" id="pruner-file-input" accept=".json" style="background: #0d121f; border: 1px solid var(--border); padding: 0.5rem; border-radius: var(--radius-sm); color: #fff;">
+          <button class="btn btn-primary" onclick="loadSampleBackupForPruner()">🧪 Cargar Backup Demo de Prueba</button>
+          <button class="btn btn-secondary" onclick="inspectCurrentPrunerFile()">🔍 Inspeccionar</button>
+        </div>
+      </div>
+
+      <!-- Métricas del Backup y Recomendaciones -->
+      <div id="pruner-report-panel" style="display: none;">
+        <div class="stats-grid" style="margin-bottom: 1.5rem;">
+          <div class="stat-card">
+            <span class="stat-label">Tamaño Original</span>
+            <span class="stat-value" id="pruner-stat-orig-size">0 KB</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Registros</span>
+            <span class="stat-value" id="pruner-stat-records">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Blobs / Fotos Pesadas</span>
+            <span class="stat-value" id="pruner-stat-blobs" style="color: #f59e0b;">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Ahorro Estimado</span>
+            <span class="stat-value" id="pruner-stat-est-saved" style="color: #10b981;">0%</span>
+          </div>
+        </div>
+
+        <!-- Alertas de Recomendación -->
+        <div id="pruner-recommendations" class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent); background: rgba(56, 189, 248, 0.05);">
+          <h4 style="margin-bottom: 0.5rem; color: var(--accent);">💡 Recomendaciones de Saneamiento Automático</h4>
+          <ul id="pruner-rec-list" style="margin-left: 1.25rem; font-size: 0.85rem; color: var(--text-muted);"></ul>
+        </div>
+
+        <!-- Modos de Poda: 1-Clic vs Quirúrgica -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <h3 style="margin-bottom: 1rem;">🧹 Filtros Rápidos de Poda (1 Clic)</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <input type="checkbox" id="chk-purge-uploads" checked>
+              <span style="font-size: 0.85rem;"><strong>Purgar subidas a OFF</strong> (libera blobs de fotos completadas)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <input type="checkbox" id="chk-strip-tickets" checked>
+              <span style="font-size: 0.85rem;"><strong>Despojar imágenes de tickets</strong> (mantiene datos e importe)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <input type="checkbox" id="chk-purge-recent" checked>
+              <span style="font-size: 0.85rem;"><strong>Vaciar productos recientes</strong> (elimina caché de escaneos)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <input type="checkbox" id="chk-purge-zero-pantry" checked>
+              <span style="font-size: 0.85rem;"><strong>Eliminar despensa stock 0</strong> (y purga logs asociados)</span>
+            </label>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="executePruning(false)">⚡ Ejecutar Poda y Ver Métricas</button>
+            <button class="btn btn-accent" onclick="executePruning(true)">📥 Descargar Backup Saneado (.json)</button>
+          </div>
+        </div>
+
+        <!-- Desglose por Tablas -->
+        <div class="card">
+          <h3 style="margin-bottom: 0.75rem;">📊 Desglose de Tablas del Backup</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tabla</th>
+                <th>Registros</th>
+                <th>Tamaño</th>
+                <th>Blobs Pesados</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="pruner-tables-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- TAB 6: DOCUMENTACIÓN OPENAPI 3.1           -->
     <!-- ========================================== -->
     <div id="tab-openapi" class="view-content">
@@ -2703,6 +2803,171 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+    }
+
+    // ── Podador de Backups NutriAgenda ──
+    let currentPrunerBackupJSON = null;
+
+    async function loadSampleBackupForPruner() {
+      try {
+        showToast('⏳ Cargando backup de demostración...');
+        const res = await fetch('/nutriagenda_backup_2026-09-28.json');
+        if (!res.ok) {
+          // Si no está expuesto directamente en la raíz de static, cargar vía endpoint de prueba
+          const altRes = await fetch('/api/export/buscatureceta');
+          if (altRes.ok) {
+            const data = await altRes.json();
+            currentPrunerBackupJSON = JSON.stringify({ version: 1, timestamp: new Date().toISOString(), data });
+          }
+        } else {
+          currentPrunerBackupJSON = await res.text();
+        }
+
+        if (!currentPrunerBackupJSON) {
+          showToast('❌ No se pudo cargar el backup de prueba');
+          return;
+        }
+
+        await inspectBackupPayload(currentPrunerBackupJSON);
+      } catch (err) {
+        showToast('❌ Error: ' + err.message);
+      }
+    }
+
+    async function inspectCurrentPrunerFile() {
+      const input = document.getElementById('pruner-file-input');
+      const file = input?.files?.[0];
+      if (!file) {
+        showToast('⚠️ Selecciona un archivo de backup .json primero');
+        return;
+      }
+      try {
+        showToast('⏳ Leyendo archivo...');
+        currentPrunerBackupJSON = await file.text();
+        await inspectBackupPayload(currentPrunerBackupJSON);
+      } catch (err) {
+        showToast('❌ Error leyendo archivo: ' + err.message);
+      }
+    }
+
+    async function inspectBackupPayload(jsonStr) {
+      try {
+        showToast('🔍 Inspeccionando tablas y blobs...');
+        const res = await fetch('/api/backup/inspect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: jsonStr
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Error inspeccionando backup');
+        }
+        const report = await res.json();
+        renderPrunerReport(report);
+      } catch (err) {
+        showToast('❌ ' + err.message);
+      }
+    }
+
+    function renderPrunerReport(report) {
+      document.getElementById('pruner-report-panel').style.display = 'block';
+
+      const kb = (report.totalSize / 1024).toFixed(1);
+      document.getElementById('pruner-stat-orig-size').textContent = `${kb} KB`;
+      document.getElementById('pruner-stat-records').textContent = report.totalRecords;
+
+      let totalBlobs = 0;
+      let totalBlobBytes = 0;
+      for (const t in report.tables) {
+        totalBlobs += report.tables[t].blobCount || 0;
+        totalBlobBytes += report.tables[t].blobBytes || 0;
+      }
+      document.getElementById('pruner-stat-blobs').textContent = `${totalBlobs} (${(totalBlobBytes / 1024).toFixed(1)} KB)`;
+
+      const estSavedPct = report.totalSize > 0 ? ((totalBlobBytes / report.totalSize) * 100).toFixed(0) : 0;
+      document.getElementById('pruner-stat-est-saved').textContent = `~${estSavedPct}%`;
+
+      // Recomendaciones
+      const recList = document.getElementById('pruner-rec-list');
+      recList.innerHTML = '';
+      if (report.recommendations && report.recommendations.length > 0) {
+        report.recommendations.forEach(r => {
+          const li = document.createElement('li');
+          li.textContent = r;
+          recList.appendChild(li);
+        });
+      } else {
+        const li = document.createElement('li');
+        li.textContent = 'El backup está en buen estado general.';
+        recList.appendChild(li);
+      }
+
+      // Tabla desglose
+      const tbody = document.getElementById('pruner-tables-tbody');
+      tbody.innerHTML = '';
+      const tableNames = Object.keys(report.tables).sort();
+      for (const t of tableNames) {
+        const info = report.tables[t];
+        const tr = document.createElement('tr');
+        const hasBlobs = info.blobCount > 0;
+        tr.innerHTML = `
+          <td><code>${escapeHtml(t)}</code></td>
+          <td>${info.count}</td>
+          <td>${(info.sizeBytes / 1024).toFixed(1)} KB</td>
+          <td>${hasBlobs ? `<span class="badge" style="background:#78350f; color:#fde68a;">${info.blobCount} (${(info.blobBytes / 1024).toFixed(1)} KB)</span>` : '<span style="color:var(--text-muted);">-</span>'}</td>
+          <td>${info.count === 0 ? '<span style="color:var(--text-muted);">Vacío</span>' : '<span style="color:#10b981;">Activo</span>'}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    async function executePruning(download) {
+      if (!currentPrunerBackupJSON) {
+        showToast('⚠️ Carga e inspecciona un backup primero');
+        return;
+      }
+
+      const opts = {
+        purgeCompletedUploads: document.getElementById('chk-purge-uploads').checked,
+        stripTicketImages: document.getElementById('chk-strip-tickets').checked,
+        purgeRecentProducts: document.getElementById('chk-purge-recent').checked,
+        purgeZeroStockPantry: document.getElementById('chk-purge-zero-pantry').checked
+      };
+
+      try {
+        showToast(download ? '⏳ Generando descarga saneada...' : '⏳ Ejecutando poda...');
+        const parsedBackup = JSON.parse(currentPrunerBackupJSON);
+        const url = `/api/backup/prune${download ? '?download=true' : ''}`;
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ backup: parsedBackup, options: opts })
+        });
+
+        if (download) {
+          const blob = await res.blob();
+          const downloadUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = 'nutriagenda_backup_podado.json';
+          a.click();
+          URL.revokeObjectURL(downloadUrl);
+          showToast('📥 Backup podado descargado con éxito');
+          return;
+        }
+
+        const data = await res.json();
+        const r = data.result;
+        showToast(`🎉 Poda completada: -${(r.bytesSaved / 1024).toFixed(1)} KB (-${r.percentSaved.toFixed(1)}%), ${r.recordsRemoved} registros saneados`, 5000);
+
+        if (data.prunedBackup) {
+          currentPrunerBackupJSON = JSON.stringify(data.prunedBackup);
+          await inspectBackupPayload(currentPrunerBackupJSON);
+        }
+      } catch (err) {
+        showToast('❌ Error al podar: ' + err.message);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', init);
