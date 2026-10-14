@@ -417,9 +417,46 @@ paths:
         '200':
           description: Paquete enriquecido para Buscatureceta
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BuscaturecetaEnrichedExport'
+  /api/backup/inspect:
+    post:
+      summary: Inspeccionar y auditar backup de NutriAgenda
+      description: Analiza la copia de seguridad, desglose de tablas, registros, blobs/fotos pesadas y emite recomendaciones de optimización.
+      operationId: inspectBackup
+      tags:
+        - Curación y Podador de Backups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Informe de inspección del backup
+
+  /api/backup/prune:
+    post:
+      summary: Podar y sanear copia de seguridad de NutriAgenda
+      description: Aplica filtros automáticos (liberar subidas OFF, tickets pesados, recentProducts, stock 0) y poda quirúrgica en cascada respetando la integridad referencial.
+      operationId: pruneBackup
+      tags:
+        - Curación y Podador de Backups
+      parameters:
+        - name: download
+          in: query
+          description: Si es true, fuerza la descarga directa del backup saneado
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Resultado de la poda y JSON saneado
 
   /api/products/import-off:
     post:

@@ -28,6 +28,12 @@ make import-bedca
 | `GET` | `/api/foods/{id}` | Detalle completo de un alimento y sus bondades |
 | `POST` | `/api/foods` | Insertar o actualizar un alimento primario |
 | `GET` | `/api/export/json` | Exportar todo el catálogo a JSON compacto para uso offline en **Buscatureceta** |
+| `GET` | `/api/export/buscatureceta` | Exportar recetas enriquecidas con bases primarias y alternativas OFF |
+| `GET` | `/api/menu/annual/export` | Generar y exportar plan anual de 52 semanas en formato Buscatureceta |
+| `POST` | `/api/backup/inspect` | Inspeccionar y reportar tamaños, tablas y fotos de backup de NutriAgenda |
+| `POST` | `/api/backup/prune` | Podar y sanear copia de seguridad (liberar subidas OFF, tickets pesados, stock 0) |
+| `GET` | `/docs` | Documentación interactiva completa OpenAPI 3.1 (Scalar UI) |
+| `GET` | `/` | Web SPA analítica unificada con analizador, planificador y podador |
 
 ---
 

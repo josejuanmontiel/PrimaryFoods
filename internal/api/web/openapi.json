@@ -612,13 +612,68 @@
         "responses": {
           "200": {
             "description": "Paquete enriquecido para Buscatureceta",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BuscaturecetaEnrichedExport"
-                }
+            "content": null
+          }
+        }
+      }
+    },
+    "/api/backup/inspect": {
+      "post": {
+        "summary": "Inspeccionar y auditar backup de NutriAgenda",
+        "description": "Analiza la copia de seguridad, desglose de tablas, registros, blobs/fotos pesadas y emite recomendaciones de optimizaci\u00f3n.",
+        "operationId": "inspectBackup",
+        "tags": [
+          "Curaci\u00f3n y Podador de Backups"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
               }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Informe de inspecci\u00f3n del backup"
+          }
+        }
+      }
+    },
+    "/api/backup/prune": {
+      "post": {
+        "summary": "Podar y sanear copia de seguridad de NutriAgenda",
+        "description": "Aplica filtros autom\u00e1ticos (liberar subidas OFF, tickets pesados, recentProducts, stock 0) y poda quir\u00fargica en cascada respetando la integridad referencial.",
+        "operationId": "pruneBackup",
+        "tags": [
+          "Curaci\u00f3n y Podador de Backups"
+        ],
+        "parameters": [
+          {
+            "name": "download",
+            "in": "query",
+            "description": "Si es true, fuerza la descarga directa del backup saneado",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado de la poda y JSON saneado"
           }
         }
       }
