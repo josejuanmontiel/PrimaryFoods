@@ -690,3 +690,111 @@ func TestBackupInspectAndPruneEndpoints(t *testing.T) {
 	}
 }
 
+func TestDiarySummaryAndDeficienciesFeedback(t *testing.T) {
+	srv := setupTestServer(t)
+
+	// 1. Inyectar recetas de prueba
+	recipes := []model.Recipe{
+		{
+			ID:   "rec-garbanzos",
+			Slug: "garbanzos-espinacas",
+			Name: "Garbanzos con Espinacas",
+			Ingredients: []model.RecipeIngredient{
+				{Name: "Garbanzos"}, {Name: "Espinacas"},
+			},
+		},
+		{
+			ID:   "rec-salmon",
+			Slug: "salmon-plancha",
+			Name: "Salmón a la plancha",
+			Ingredients: []model.RecipeIngredient{
+				{Name: "Salmón"},
+			},
+		},
+		{
+			ID:   "rec-pollo",
+			Slug: "pechuga-pollo",
+			Name: "Pechuga de pollo a la plancha",
+			Ingredients: []model.RecipeIngredient{
+				{Name: "Pollo"},
+			},
+		},
+	}
+	_ = srv.storage.SaveRecipes(recipes)
+
+	// 2. Sincronizar un diario para la semana 41 (del 2026-10-05 al 2026-10-11) con déficit de legumbres y pescado
+	pkg := model.BuscaturecetaPackage{
+		SchemaVersion: "1.0",
+		App:           "buscatureceta",
+		ExportedAt:    "2026-10-12T10:00:00Z",
+		Diary: []model.DiaryEntry{
+			{
+				ID:       101,
+				Date:     "2026-10-06",
+				MealType: "lunch",
+				Status:   "consumed",
+				Items: []model.DiaryItem{
+					{Course: "main", Name: "Pechuga de pollo a la plancha", Status: "consumed"},
+				},
+			},
+			{
+				ID:       102,
+				Date:     "2026-10-08",
+				MealType: "dinner",
+				Status:   "consumed",
+				Items: []model.DiaryItem{
+					{Course: "main", Name: "Tortilla francesa con ensalada", Status: "consumed"},
+				},
+			},
+		},
+	}
+	pkgBytes, _ := json.Marshal(pkg)
+	reqSync := httptest.NewRequest("POST", "/api/sync/buscatureceta", strings.NewReader(string(pkgBytes)))
+	reqSync.Header.Set("Content-Type", "application/json")
+	recSync := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(recSync, reqSync)
+	if recSync.Code != http.StatusOK {
+		t.Fatalf("Sync falló con código %d", recSync.Code)
+	}
+
+	// 3. Probar GET /api/diary/summary?week=41&year=2026
+	reqSumm := httptest.NewRequest("GET", "/api/diary/summary?week=41&year=2026", nil)
+	recSumm := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(recSumm, reqSumm)
+	if recSumm.Code != http.StatusOK {
+		t.Fatalf("GET /api/diary/summary falló: %d", recSumm.Code)
+	}
+
+	var summResp struct {
+		Summary      model.DiaryNutritionalSummary `json:"summary"`
+		EntriesCount int                           `json:"entriesCount"`
+	}
+	if err := json.Unmarshal(recSumm.Body.Bytes(), &summResp); err != nil {
+		t.Fatalf("Error deserializando summary: %v", err)
+	}
+	if summResp.EntriesCount != 2 {
+		t.Errorf("Esperaba 2 entriesCount, obtenido %d", summResp.EntriesCount)
+	}
+	if summResp.Summary.LegumeDeficit < 3 {
+		t.Errorf("Esperaba déficit de legumbres >= 3, obtenido %d", summResp.Summary.LegumeDeficit)
+	}
+
+	// 4. Probar GET /api/menu/generate?week=42&year=2026&compensate_deficiencies=true
+	reqGen := httptest.NewRequest("GET", "/api/menu/generate?week=42&year=2026&compensate_deficiencies=true", nil)
+	recGen := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(recGen, reqGen)
+	if recGen.Code != http.StatusOK {
+		t.Fatalf("GET /api/menu/generate falló: %d", recGen.Code)
+	}
+
+	var plan model.WeeklyMenuPlan
+	if err := json.Unmarshal(recGen.Body.Bytes(), &plan); err != nil {
+		t.Fatalf("Error deserializando plan: %v", err)
+	}
+
+	if len(plan.DeficienciesCompensated) == 0 {
+		t.Errorf("Esperaba notas de compensación en el plan semanal")
+	}
+}
+
+

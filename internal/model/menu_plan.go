@@ -28,6 +28,7 @@ type WeeklyMenuPlan struct {
 	PantrySavings   int             `json:"pantrySavings"`   // Ingredientes usados antes de caducar
 	ZeroFuelMeals   int             `json:"zeroFuelMeals"`   // Comidas listas sin encender fuego
 	MinimalFuelMeals int            `json:"minimalFuelMeals"`// Comidas que solo requieren 1-3 min de agua caliente
+	DeficienciesCompensated []string `json:"deficienciesCompensated,omitempty"` // Carencias de la semana previa compensadas en este menú
 	Slots           []DailyMealSlot `json:"slots"`
 }
 
@@ -39,6 +40,8 @@ type MenuGenerationOptions struct {
 	FuelSavingMode   bool `json:"fuelSavingMode"`   // Modo supervivencia/ahorro energético: prioriza zero/minimal fire
 	TargetLegumeDays int  `json:"targetLegumeDays"` // Objetivo recomendado: 3-4
 	TargetFishDays   int  `json:"targetFishDays"`   // Objetivo recomendado: 2-3
+	CompensatePreviousWeek bool `json:"compensatePreviousWeek,omitempty"` // Si es true, analiza la semana anterior del diario y compensa déficits
+	CompensateDeficiencies *DiaryNutritionalSummary `json:"compensateDeficiencies,omitempty"` // Resumen de carencias explícito
 }
 
 // AnnualMenuPlan representa la proyección anual completa de 52 semanas

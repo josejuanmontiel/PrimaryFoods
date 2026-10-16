@@ -83,10 +83,11 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/config", s.handleGetConfig)
 	s.mux.HandleFunc("POST /api/config", s.handleUpdateConfig)
 
-	// Sincronización Buscatureceta
+	// Sincronización Buscatureceta y Diario
 	s.mux.HandleFunc("POST /api/sync/buscatureceta", s.handleSyncBuscatureceta)
 	s.mux.HandleFunc("GET /api/pantry", s.handleGetPantry)
 	s.mux.HandleFunc("GET /api/pantry/shelf-life/estimate", s.handleEstimateShelfLife)
+	s.mux.HandleFunc("GET /api/diary/summary", s.handleGetDiarySummary)
 
 	// Estacionalidad y Calendario
 	s.mux.HandleFunc("GET /api/seasonal/calendar", s.handleGetSeasonalCalendar)
@@ -1500,6 +1501,8 @@ func (s *Server) handleGenerateWeeklyMenu(w http.ResponseWriter, r *http.Request
 		}
 	}
 
+	compensateDeficiencies := q.Get("compensate_deficiencies") == "true" || q.Get("compensate_previous_week") == "true"
+
 	// 1. Obtener recetas
 	recipes, err := s.storage.GetAllRecipes()
 	if err != nil {
@@ -1532,6 +1535,22 @@ func (s *Server) handleGenerateWeeklyMenu(w http.ResponseWriter, r *http.Request
 		TargetFishDays:   3,
 	}
 
+	// Si se solicita compensar carencias de la semana previa, calculamos el resumen de la semana week-1
+	if compensateDeficiencies {
+		prevWeek := week - 1
+		prevYear := year
+		if prevWeek < 1 {
+			prevWeek = 52
+			prevYear--
+		}
+		startRange, endRange := planner.WeekDateRange(prevYear, prevWeek)
+		entries, err := s.storage.GetDiaryEntriesByDateRange(startRange, endRange)
+		if err == nil && len(entries) > 0 {
+			summary := planner.AnalyzeDiaryDeficiencies(entries, prevYear, prevWeek, opts.TargetLegumeDays, opts.TargetFishDays)
+			opts.CompensateDeficiencies = &summary
+		}
+	}
+
 	plan, err := s.planner.GenerateWeeklyPlan(recipes, pantry, seasonalItems, opts)
 	if err != nil {
 		s.errorResponse(w, http.StatusInternalServerError, "Error generando menú semanal: "+err.Error())
@@ -1544,13 +1563,16 @@ func (s *Server) handleGenerateWeeklyMenu(w http.ResponseWriter, r *http.Request
 // handlePostGenerateWeeklyMenu — POST /api/menu/generate con opciones ad-hoc
 func (s *Server) handlePostGenerateWeeklyMenu(w http.ResponseWriter, r *http.Request) {
 	type menuReq struct {
-		Week             int                `json:"week"`
-		Year             int                `json:"year"`
-		PrioritizePantry bool               `json:"prioritizePantry"`
-		TargetLegumeDays int                `json:"targetLegumeDays"`
-		TargetFishDays   int                `json:"targetFishDays"`
-		CustomRecipes    []model.Recipe     `json:"recipes,omitempty"`
-		CustomPantry     []model.PantryItem `json:"pantry,omitempty"`
+		Week                   int                            `json:"week"`
+		Year                   int                            `json:"year"`
+		PrioritizePantry       bool                           `json:"prioritizePantry"`
+		FuelSavingMode         bool                           `json:"fuelSavingMode"`
+		TargetLegumeDays       int                            `json:"targetLegumeDays"`
+		TargetFishDays         int                            `json:"targetFishDays"`
+		CompensatePreviousWeek bool                           `json:"compensatePreviousWeek"`
+		CompensateDeficiencies *model.DiaryNutritionalSummary `json:"compensateDeficiencies,omitempty"`
+		CustomRecipes          []model.Recipe                 `json:"recipes,omitempty"`
+		CustomPantry           []model.PantryItem             `json:"pantry,omitempty"`
 	}
 
 	var req menuReq
@@ -1592,12 +1614,38 @@ func (s *Server) handlePostGenerateWeeklyMenu(w http.ResponseWriter, r *http.Req
 		Month: approxMonth,
 	})
 
+	targetLegumes := req.TargetLegumeDays
+	if targetLegumes == 0 {
+		targetLegumes = 3
+	}
+	targetFish := req.TargetFishDays
+	if targetFish == 0 {
+		targetFish = 3
+	}
+
 	opts := model.MenuGenerationOptions{
-		Year:             year,
-		Week:             week,
-		PrioritizePantry: req.PrioritizePantry,
-		TargetLegumeDays: req.TargetLegumeDays,
-		TargetFishDays:   req.TargetFishDays,
+		Year:                   year,
+		Week:                   week,
+		PrioritizePantry:       req.PrioritizePantry,
+		FuelSavingMode:         req.FuelSavingMode,
+		TargetLegumeDays:       targetLegumes,
+		TargetFishDays:         targetFish,
+		CompensateDeficiencies: req.CompensateDeficiencies,
+	}
+
+	if req.CompensatePreviousWeek && opts.CompensateDeficiencies == nil {
+		prevWeek := week - 1
+		prevYear := year
+		if prevWeek < 1 {
+			prevWeek = 52
+			prevYear--
+		}
+		startRange, endRange := planner.WeekDateRange(prevYear, prevWeek)
+		entries, err := s.storage.GetDiaryEntriesByDateRange(startRange, endRange)
+		if err == nil && len(entries) > 0 {
+			summary := planner.AnalyzeDiaryDeficiencies(entries, prevYear, prevWeek, targetLegumes, targetFish)
+			opts.CompensateDeficiencies = &summary
+		}
 	}
 
 	plan, err := s.planner.GenerateWeeklyPlan(recipes, pantry, seasonalItems, opts)
@@ -1607,6 +1655,45 @@ func (s *Server) handlePostGenerateWeeklyMenu(w http.ResponseWriter, r *http.Req
 	}
 
 	s.jsonResponse(w, http.StatusOK, plan)
+}
+
+// handleGetDiarySummary — GET /api/diary/summary?week=X&year=Y
+func (s *Server) handleGetDiarySummary(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	weekStr := q.Get("week")
+	yearStr := q.Get("year")
+
+	week := 0
+	if weekStr != "" {
+		if wNum, err := strconv.Atoi(weekStr); err == nil && wNum >= 1 && wNum <= 53 {
+			week = wNum
+		}
+	}
+	if week == 0 {
+		_, currentWeek := time.Now().ISOWeek()
+		week = currentWeek
+	}
+
+	year := time.Now().Year()
+	if yearStr != "" {
+		if yNum, err := strconv.Atoi(yearStr); err == nil && yNum > 2000 {
+			year = yNum
+		}
+	}
+
+	startRange, endRange := planner.WeekDateRange(year, week)
+	entries, err := s.storage.GetDiaryEntriesByDateRange(startRange, endRange)
+	if err != nil {
+		s.errorResponse(w, http.StatusInternalServerError, "Error consultando entradas de diario: "+err.Error())
+		return
+	}
+
+	summary := planner.AnalyzeDiaryDeficiencies(entries, year, week, 3, 3)
+
+	s.jsonResponse(w, http.StatusOK, map[string]interface{}{
+		"summary":      summary,
+		"entriesCount": len(entries),
+	})
 }
 
 // handleGetCookingEnergyProfiles — GET /api/cooking/energy-profiles

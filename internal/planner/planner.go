@@ -64,6 +64,35 @@ func (p *MenuPlanner) GenerateWeeklyPlan(
 		opts.TargetFishDays = 3
 	}
 
+	var compensatedNotes []string
+	bonusLegume := 25.0
+	bonusFish := 20.0
+	bonusOilyFish := 10.0
+
+	// Si se suministraron carencias para compensar (Feedback loop de la semana N-1)
+	if opts.CompensateDeficiencies != nil {
+		if opts.CompensateDeficiencies.LegumeDeficit > 0 {
+			opts.TargetLegumeDays += opts.CompensateDeficiencies.LegumeDeficit
+			if opts.TargetLegumeDays > 5 {
+				opts.TargetLegumeDays = 5 // Máximo razonable
+			}
+			bonusLegume += 15.0
+			compensatedNotes = append(compensatedNotes, fmt.Sprintf("Ajustado objetivo de legumbres a %d días para compensar déficit previo de %d raciones", opts.TargetLegumeDays, opts.CompensateDeficiencies.LegumeDeficit))
+		}
+		if opts.CompensateDeficiencies.FishDeficit > 0 {
+			opts.TargetFishDays += opts.CompensateDeficiencies.FishDeficit
+			if opts.TargetFishDays > 5 {
+				opts.TargetFishDays = 5
+			}
+			bonusFish += 15.0
+			compensatedNotes = append(compensatedNotes, fmt.Sprintf("Ajustado objetivo de pescado a %d días para compensar déficit previo de %d raciones", opts.TargetFishDays, opts.CompensateDeficiencies.FishDeficit))
+		}
+		if opts.CompensateDeficiencies.OilyFishDeficit > 0 {
+			bonusOilyFish += 20.0
+			compensatedNotes = append(compensatedNotes, "Priorizado pescado azul para compensar falta de omega-3 en la semana previa")
+		}
+	}
+
 	// 1. Mapeo de alimentos estacionales normalizados -> nivel de disponibilidad
 	seasonalMap := make(map[string]model.SeasonalAvailability)
 	for _, si := range seasonalItems {
@@ -145,13 +174,13 @@ func (p *MenuPlanner) GenerateWeeklyPlan(
 
 				// Control mediterráneo: incentivar legumbres si estamos por debajo del objetivo
 				if cand.IsLegume && legumeCount < opts.TargetLegumeDays && mType == "almuerzo" {
-					score += 25.0
+					score += bonusLegume
 				}
 				// Incentivar pescado
 				if cand.IsFish && fishCount < opts.TargetFishDays {
-					score += 20.0
+					score += bonusFish
 					if cand.IsOilyFish {
-						score += 10.0
+						score += bonusOilyFish
 					}
 				}
 
@@ -224,6 +253,7 @@ func (p *MenuPlanner) GenerateWeeklyPlan(
 	plan.PantrySavings = totalPantrySavings
 	plan.ZeroFuelMeals = zeroFuelCount
 	plan.MinimalFuelMeals = minimalFuelCount
+	plan.DeficienciesCompensated = compensatedNotes
 
 	return plan, nil
 }
@@ -248,7 +278,7 @@ func (p *MenuPlanner) scoreRecipe(
 	for _, ing := range rec.Ingredients {
 		fullText.WriteString(" " + strings.ToLower(ing.Name))
 	}
-	text := fullText.String()
+	text := matcher.Normalize(fullText.String())
 
 	if strings.Contains(text, "lenteja") || strings.Contains(text, "garbanzo") ||
 		strings.Contains(text, "alubia") || strings.Contains(text, "judia") || strings.Contains(text, "legumbre") {

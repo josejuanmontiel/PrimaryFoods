@@ -631,6 +631,33 @@ func (s *Storage) SaveDiaryHistory(diary []model.DiaryEntry, versions []model.Di
 	return tx.Commit()
 }
 
+// GetDiaryEntriesByDateRange devuelve las entradas de diario comprendidas entre startDate y endDate (inclusive, formato YYYY-MM-DD)
+func (s *Storage) GetDiaryEntriesByDateRange(startDate, endDate string) ([]model.DiaryEntry, error) {
+	rows, err := s.db.Query(`
+		SELECT data_json 
+		FROM user_diary 
+		WHERE date >= ? AND date <= ?
+		ORDER BY date ASC, id ASC`, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []model.DiaryEntry
+	for rows.Next() {
+		var dataJSON string
+		if err := rows.Scan(&dataJSON); err != nil {
+			return nil, err
+		}
+		var entry model.DiaryEntry
+		if err := json.Unmarshal([]byte(dataJSON), &entry); err != nil {
+			continue
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
 // SaveRecipes guarda o actualiza recetas (de Mealie o internas) en la base de datos
 func (s *Storage) SaveRecipes(recipes []model.Recipe) error {
 	tx, err := s.db.Begin()

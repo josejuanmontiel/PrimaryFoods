@@ -82,16 +82,12 @@ PrimaryFoods evoluciona para convertirse en el **cerebro nutricional, analizador
 
 > **Objetivo:** Generar menús semanales completos y equilibrados según la semana del año, disponibilidad estacional y existencias de despensa.
 
-- [ ] **Matriz de Estacionalidad (52 semanas en España)**:
-  - Definir meses/semanas óptimas para cada alimento primario (verduras, frutas, pescados de temporada).
-- [ ] **Motor de Reglas Nutricionales y Rotación**:
-  - Criterios mediterráneos configurables:
-    - 3–4 días de legumbres a la semana.
-    - 2–3 días de pescado (al menos 1 azul).
-    - Variedad cromática/polifenoles diaria y fuentes de fibra.
-- [ ] **Generador de Menú Semanal Adaptativo**:
-  - Algoritmo que selecciona recetas del catálogo indexado de Mealie que cumplen las reglas de la semana y priorizan lo que ya existe en la despensa.
-  - Endpoint `/api/menu/generate?week=XX&pantry=[codes...]`.
+- [x] **Matriz de Estacionalidad (52 semanas en España)**:
+  - [x] Implementado en Épica 7 (Fase 2) con catálogo estacional `seasonal_definitions.json`, endpoints y tabla SQLite `seasonal_calendar`.
+- [x] **Motor de Reglas Nutricionales y Rotación**:
+  - [x] Implementado en Épica 7 (Fase 3) con reglas mediterráneas (legumbres 3-4 días, pescados 2-3 días, variedad y penalización por repetición).
+- [x] **Generador de Menú Semanal Adaptativo**:
+  - [x] Implementado en Épica 7 (Fases 3 y 4) con endpoints `/api/menu/generate`, exportación anual e integración con despensa y eficiencia energética.
 
 ---
 
@@ -129,9 +125,12 @@ PrimaryFoods evoluciona para convertirse en el **cerebro nutricional, analizador
   - [x] Historial de decisiones inmutable en `diaryVersions`.
 - [x] **Descuento de Despensa Reconciliado**:
   - [x] El stock de despensa se descuenta según lo **realmente consumido**, evitando desfases en el inventario con toggle de cocinado en casa.
-- [ ] **Detector de Carencias y Retroalimentación**:
-  - Resumen semanal de ingestas reales: *"Esta semana faltó un 30% del objetivo de fibra y no hubo ración de pescado azul"*.
-  - Enviar estas carencias como parámetro al generador del siguiente menú semanal en PrimaryFoods para compensarlas automáticamente.
+- [x] **Detector de Carencias y Retroalimentación (COMPLETADA)**:
+  - [x] Motor de análisis nutricional de ingestas reales `AnalyzeDiaryDeficiencies()` en [internal/planner/deficiencies.go](file:///home/jose/workspace/josejuanmontiel/PrimaryFoods/internal/planner/deficiencies.go) (legumbres, pescado, pescado azul/omega-3, verduras, omitidas y comidas fuera de casa).
+  - [x] Endpoint `GET /api/diary/summary?week=X&year=Y` para consultar el balance semanal y las deficiencias detectadas.
+  - [x] Feedback loop reactivo en `GenerateWeeklyPlan()`: compensación automática de déficits de la semana previa incrementando targets y bonificaciones de recetas (legumbres, pescado y omega-3).
+  - [x] Activación por parámetro `compensate_deficiencies=true` en `GET /api/menu/generate` y en el payload de `POST /api/menu/generate`.
+  - [x] Tests unitarios y de integración (`deficiencies_test.go` y `TestDiarySummaryAndDeficienciesFeedback` en `handlers_test.go`).
 
 ---
 

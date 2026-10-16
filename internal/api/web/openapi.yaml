@@ -480,6 +480,71 @@ paths:
         '200':
           description: Resultado de la importación
 
+  /api/diary/summary:
+    get:
+      summary: Resumen nutricional y detección de carencias de ingestas reales
+      operationId: getDiarySummary
+      tags:
+        - Integración Buscatureceta
+      parameters:
+        - name: week
+          in: query
+          description: Semana ISO a analizar (1-52)
+          schema:
+            type: integer
+            example: 42
+        - name: year
+          in: query
+          description: Año de análisis
+          schema:
+            type: integer
+            example: 2026
+      responses:
+        '200':
+          description: Resumen nutricional y lista de carencias detectadas frente a metas mediterráneas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: object
+                    properties:
+                      year:
+                        type: integer
+                      week:
+                        type: integer
+                      startDate:
+                        type: string
+                      endDate:
+                        type: string
+                      totalConsumedMeals:
+                        type: integer
+                      legumeMeals:
+                        type: integer
+                      fishMeals:
+                        type: integer
+                      oilyFishMeals:
+                        type: integer
+                      vegetableMeals:
+                        type: integer
+                      skippedMeals:
+                        type: integer
+                      eatenOutMeals:
+                        type: integer
+                      deficiencies:
+                        type: array
+                        items:
+                          type: string
+                      legumeDeficit:
+                        type: integer
+                      fishDeficit:
+                        type: integer
+                      oilyFishDeficit:
+                        type: integer
+                  entriesCount:
+                    type: integer
+
   /api/pantry:
     get:
       summary: Obtener inventario actual de despensa
